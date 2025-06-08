@@ -1,60 +1,63 @@
 import PhoneNumber from 'awesome-phonenumber';
 
 let handler = async (m, { conn }) => {
-  m.react('👋');
-  let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender;
-  let pp = await conn.profilePictureUrl(who).catch(_ => 'https://qu.ax/PRgfc.jpg');
-  let biografia = await conn.fetchStatus(`50493732693@s.whatsapp.net`).catch(_ => 'Sin Biografía');
-  let biografiaBot = await conn.fetchStatus(`${conn.user.jid.split('@')[0]}@s.whatsapp.net`).catch(_ => 'Sin Biografía');
-  let bio = biografia.status?.toString() || 'Sin Biografía';
-  let biobot = biografiaBot.status?.toString() || 'Sin Biografía';
-  let name = await conn.getName(who);
+  await conn.sendMessage(m.chat, { react: { text: '👋', key: m.key } });
 
-  // Aquí agregamos ambos creadores
-  await sendContactArray(conn, m.chat, [
-    ['50493732693', 'Wirk', botname, 'No Hacer Spam', '⊹˚• Honduras •˚⊹', md, bio, 'Creador +50493732693'],
-    ['51921826291', 'Maycol', packname, 'Responsable', '⊹˚• Perú •˚⊹', channel, biobot, 'Creador +51 921 826 291']
-  ], m);
-}
+  let creators = [
+    {
+      number: '50493732693',
+      name: 'Wirk',
+      org: 'Creador',
+      label: 'Creador +50493732693',
+      region: 'Honduras',
+      email: 'wirksupport@example.com',
+      website: 'https://wirksite.com',
+      description: 'No hacer spam',
+    },
+    {
+      number: '51921826291',
+      name: 'Maycol',
+      org: 'Co-Creador',
+      label: 'Creador +51 921 826 291',
+      region: 'Perú',
+      email: 'maycol@example.com',
+      website: 'https://maycol.com',
+      description: 'Responsable',
+    },
+  ];
 
-handler.help = ["creador", "owner"];
-handler.tags = ["info"];
-handler.command = ['owner', 'creator', 'creador', 'dueño'];
-
-export default handler;
-
-async function sendContactArray(conn, jid, data, quoted, options) {
-  if (!Array.isArray(data[0]) && typeof data[0] === 'string') data = [data];
-  let contacts = [];
-  for (let [number, name, isi, isi1, isi2, isi3, isi4, isi5] of data) {
-    number = number.replace(/[^0-9]/g, '');
-    let njid = number + '@s.whatsapp.net';
+  let contacts = creators.map(({ number, name, org, label, region, email, website, description }) => {
+    let cleanNumber = number.replace(/[^0-9]/g, '');
     let vcard = `
 BEGIN:VCARD
 VERSION:3.0
-N:;${name.replace(/\n/g, '\\n')};;;
-FN:${name.replace(/\n/g, '\\n')}
-item.ORG:${isi}
-item1.TEL;waid=${number}:${PhoneNumber('+' + number).getNumber('international')}
-item1.X-ABLabel:${isi1}
-item2.EMAIL;type=INTERNET:${isi2}
-item2.X-ABLabel:Email
-item3.ADR:;;${isi3};;;;
-item3.X-ABADR:ac
-item3.X-ABLabel:Region
-item4.URL:${isi4}
-item4.X-ABLabel:Website
-item5.X-ABLabel:${isi5}
+N:;${name};;;
+FN:${name}
+ORG:${org}
+TEL;type=CELL;waid=${cleanNumber}:${PhoneNumber('+' + cleanNumber).getNumber('international')}
+X-ABLabel:${label}
+EMAIL;type=INTERNET:${email}
+X-ABLabel:Email
+ADR:;;${region};;;;
+X-ABLabel:Region
+URL:${website}
+X-ABLabel:Website
+NOTE:${description}
 END:VCARD`.trim();
-    contacts.push({ vcard, displayName: name });
-  }
-  return await conn.sendMessage(jid, {
-    contacts: {
-      displayName: (contacts.length > 1 ? `Contactos` : contacts[0].displayName) || null,
-      contacts,
-    }
-  }, {
-    quoted,
-    ...options
+
+    return { vcard, displayName: name };
   });
-  }
+
+  await conn.sendMessage(m.chat, {
+    contacts: {
+      displayName: 'Creadores',
+      contacts
+    }
+  }, { quoted: m });
+};
+
+handler.help = ['creadores', 'owner', 'dueño'];
+handler.tags = ['info'];
+handler.command = ['creador', 'owner', 'dueño', 'creadores'];
+
+export default handler;
