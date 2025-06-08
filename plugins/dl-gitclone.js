@@ -28,5 +28,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 handler.help = ["gitclone"];
 handler.command = ["gitclone"];
 handler.tags = ["download"];
+handler.register = true;
 
 export default handler;
