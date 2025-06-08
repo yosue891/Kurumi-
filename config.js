@@ -29,10 +29,10 @@ global.APIKeys = {
 
 // Sticker WM & prefijo
 global.prefijo = ""; // déjalo en blanco para multi - prefijo
-global.packname = "ѕуℓρнιєттє'ѕ | αℓρнα ν1";
+global.packname = "✿ ʏᴜʀᴜ ʏᴜʀɪ ✿";
 global.footer = "ᴅᴇᴠᴇʟᴏᴘᴇᴅ ʙʏ ɪ'ᴍ ғᴢ ~";
-global.wm = "ѕуℓρнιєттє'ѕ | αℓρнα ν1";
-global.author = "ɪ'ᴍ ғᴢ ~"
+global.wm = "☔︎︎ ᴛʜᴇ ʏᴜʀᴜ ʏᴜʀɪ | ᴠ1 ☁︎";
+global.author = "✎ 𝖬𝖺𝖽𝖾 𝖶𝗂𝗍𝗁 𝖶𝗂𝗋𝗄 𝖠𝗇𝖽 𝖬𝖺𝗒𝖼𝗈𝗅 ☄︎"
 global.link = 'https://chat.whatsapp.com/JQMyVsc8U4iEHi7qLFgYNH';
 global.logo = 'https://files.cloudmini.net/download/xO27.jpeg'; 
 
