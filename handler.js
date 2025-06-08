@@ -551,7 +551,7 @@ global.dfail = (type, m, conn) => {
   admin: `🌟 *Acceso Admin*\n\n🛡️ Este comando es exclusivo para *Administradores del grupo*.`,
   botAdmin: `🌟 *Permiso Requerido*\n\n💥 Para usar este comando, necesito ser *Administrador del grupo*.`,
   unreg: `🌟 *Registro Requerido*\n\n♥︎ ¡Debes registrarte para usar esta función!\n\n✏️ Usa: */reg nombre.edad*\n❢ Ejemplo: */reg Wirk.54*`,
-  restrict: `🌟 *Función Restringida*\n\n🔐 Esta característica está *deshabilitada* por el propietario del bot.`,
+  restrict: `🌟 *Función Restringida*\n\n🔐 Esta característica está *deshabilitada* por el propietario del bot.`
 }[type];
     if (msg) return m.reply(msg)
 }
