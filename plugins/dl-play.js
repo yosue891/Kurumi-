@@ -44,7 +44,7 @@ ${wm}`;
         }
     }
 }
-handler.help = ["play", "play2"];
+handler.help = ["play"];
 handler.tags = ["download"];
 handler.command = ["play", "playvid"];
 export default handler;
