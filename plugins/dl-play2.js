@@ -63,5 +63,5 @@ let handler = async (m, { conn, text, command }) => {
   }
 };
 
-handler.command = ['ytmp4', 'ymp4'];
+handler.command = ['play2'];
 export default handler;
