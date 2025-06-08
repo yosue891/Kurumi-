@@ -41,7 +41,7 @@ let handler = async (m, { conn }) => {
     contextInfo: {
       externalAdReply: {
         title: `✨ Hola ${nombre} ✨`,
-        body: `Menú personalizado 😎`,
+        body: `¡Holaaa! >w<`,
         thumbnail: adreplyImage,
         mediaType: 1,
         renderLargerThumbnail: true,
