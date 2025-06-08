@@ -1,99 +1,71 @@
-import fs from "fs";
-import axios from "axios";
-import FormData from "form-data";
-import mime from "mime-types";
+// Código ofc de Anya ⚔️
+//Creditos para SoyMaycol y Wirk
+import fetch from "node-fetch";
+import crypto from "crypto";
+import { FormData, Blob } from "formdata-node";
+import { fileTypeFromBuffer } from "file-type";
 
-let handler = async (m, { conn, args, usedPrefix }) => {
-  if (!m.quoted) throw `☘️ Responde a una imagen o vídeo usando el comando.`;
+let handler = async (m, { conn }) => {
+  let q = m.quoted || m;
+  let mime = (q.msg || q).mimetype || '';
+  if (!mime) return conn.reply(m.chat, `📎 Por favor responde a un archivo válido (imagen, video, documento, etc).`, m);
 
-  if (!args[0]) throw `🌳 Elige una de las siguientes opciones:
-
-▸ \`CloudMini :\` *1 ( imagen & vídeo )*
-▸ \`Telegra :\` *2 ( imagen )*
-▸ \`CatBox :\` *3 ( imagen & vídeo )*
-
-## \`Ejemplo :\` ${usedPrefix}tourl 1
-`;
-
-  if (!m.quoted.mimetype?.includes("image") && !m.quoted.mimetype?.includes("video"))
-    throw `☘️ Solo se aceptan imágenes o vídeos.`;
-
-  let buffer = await m.quoted.download();
-  let ext = mime.extension(m.quoted.mimetype) || "bin";
-  const path = `./downloads/temp_${Date.now()}.${ext}`;
-  fs.writeFileSync(path, buffer);
+  await m.react('🕒');
 
   try {
-    let info;
-    if (args[0] === "1") {
-      info = await cloudmini(path);
-    } else if (args[0] === "2") {
-      info = await telegra(path);
-    } else {
-      info = await catbox(path);
-    }
-    m.reply(`☘️ \`URL :\` ${info}`);
-  } finally {
-    fs.unlinkSync(path);
+    let media = await q.download();
+    let linkData = await maybox(media, mime);
+
+    if (!linkData?.data?.url) throw '❌ No se pudo subir el archivo';
+
+    let info = linkData.data;
+    let txt = `*🍫 Wirksi Box 🍫*\n\n`;
+    txt += `*📄 Archivo:* ${info.originalName}\n`;
+    txt += `*📦 Tamaño:* ${formatBytes(info.size)}\n`;
+    txt += `*📅 Subido:* ${formatDate(info.uploadedAt)}\n`;
+    txt += `*🔗 Enlace:* ${info.url}\n\n`;
+    txt += `> 🌐 *Servicio proporcionado por Wirk*`;
+
+    await conn.sendFile(m.chat, media, info.fileName, txt, m);
+    await m.react('✅');
+  } catch (err) {
+    console.error(err);
+    await m.react('❌');
+    await conn.reply(m.chat, `🚫 Hubo un error al subir el archivo a WirksiBox. Intenta de nuevo más tarde.`, m);
   }
 };
 
-handler.help = handler.command = ["tourl"];
-handler.tags = ["tools"];
+handler.help = ['wirksibox'];
+handler.tags = ['uploader'];
+handler.command = ['wirksibox', 'tourl'];
 export default handler;
 
-async function telegra(path) {
-  try {
-    let data = new FormData();
-    data.append("images", fs.createReadStream(path));
-
-    let response = await axios.post("https://telegraph.zorner.men/upload", data, {
-      headers: data.getHeaders(),
-    });
-
-    return response.data.links[0];
-  } catch (err) {
-    throw new Error(err.message);
-  }
+// --- Funciones auxiliares ---
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`;
 }
 
-async function cloudmini(path) {
-  try {
-    const file_type = path.split(".").pop();
-    const file_name = path.split("/").pop();
-    const unique_id = randomKarakter(2) + (file_type + file_name).length;
-
-    const form = new FormData();
-    form.append("file", fs.createReadStream(path), `${unique_id}.${file_type}`);
-
-    const response = await axios.post("https://files.cloudmini.net/upload", form, {
-      headers: form.getHeaders(),
-    });
-
-    const { filename } = response.data;
-    return `https://files.cloudmini.net/download/${filename}`;
-  } catch (err) {
-    throw new Error(err.message);
-  }
+function formatDate(date) {
+  return new Date(date).toLocaleString('es-ES', { timeZone: 'America/Tegucigalpa' });
 }
 
-async function catbox(path) {
-  const data = new FormData();
-  data.append("reqtype", "fileupload");
-  data.append("userhash", "");
-  data.append("fileToUpload", fs.createReadStream(path));
+async function maybox(content, mime) {
+  const { ext } = (await fileTypeFromBuffer(content)) || { ext: 'bin' };
+  const blob = new Blob([content.toArrayBuffer()], { type: mime });
+  const form = new FormData();
+  const filename = `${Date.now()}-${crypto.randomBytes(3).toString('hex')}.${ext}`;
+  form.append('file', blob, filename);
 
-  const response = await axios.post("https://catbox.moe/user/api.php", data, {
+  const res = await fetch('https://wirksibox.onrender.com/api/upload', {
+    method: 'POST',
+    body: form,
     headers: {
-      ...data.getHeaders(),
-      "User-Agent": "Mozilla/5.0",
-    },
+      'User-Agent': 'AnyaForger',
+    }
   });
 
-  return response.data;
-}
-
-function randomKarakter(length) {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return await res.json();
 }
