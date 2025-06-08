@@ -12,17 +12,13 @@ const handler = async (m, { conn, text, command }) => {
     let video = res.all[0];
     let total = Number(video.duration.seconds) || 0;
 
-    const cap = `
-\`\`\`⊜─⌈ 📻 ◜YouTube Play◞ 📻 ⌋─⊜\`\`\`
+    const cap = `> *「❀」${video.title}*
+> *✧ Canal : »* ${video.author.name}
+> *✧ Duración : »* ${video.duration.timestamp}
+> *✧ Vistas : »* ${video.views}
+> *✧ URL : »* ${video.url}
 
-≡ 🌿 \`Título\` : » ${video.title}
-≡ 🌾 \`Author\` : » ${video.author.name}
-≡ 🌱 \`Duración\` : » ${video.duration.timestamp}
-≡ 🌴 \`Vistas\` : » ${video.views}
-≡ ☘️ \`URL\`      : » ${video.url}
-
-тнe вeѕт wнaтѕapp вy ι'м ғz
-`;
+${wm}`;
     await conn.sendFile(m.chat, await (await fetch(video.thumbnail)).buffer(), "image.jpg", cap, m);
 
     if (command === "play") {
