@@ -118,19 +118,20 @@ global.menu = async function getMenu() {
     }
   }
   for (let category of Object.keys(tags)) {
-    let cmds = await Promise.all(help
-      .filter(
-        (menu) => menu.tags && menu.tags.includes(category) && menu.help
-      )
-      .map(async (menu) => {
-        return await Promise.all(menu.help
-          .map(async (cmd) => `𖦹 𓈒 \`${await style(cmd, 10)}\``));
-      }));
+  let cmds = await Promise.all(
+    help
+      .filter(menu => menu.tags && menu.tags.includes(category) && menu.help)
+      .map(async menu => {
+        return await Promise.all(
+          menu.help.map(async cmd => `𖦹 𓈒 \`${await style(cmd, 10)}\``)
+        );
+      })
+  );
 
-    if (cmds.length > 0) {
-      text += `✦ *${await style(tags[category], 7)}*\n\n${cmds.map(cmdArray => cmdArray.join('\n')).join('\n')}\n\n`;
-    }
+  if (cmds.length > 0) {
+    text += `✦ *${await style(tags[category], 7)}*\n\n${cmds.map(cmdArray => cmdArray.join('\n')).join('\n')}\n\n`;
   }
-  text += `\`${footer}\``;
-  global.menutext = text;
-};
+}
+
+text += `\`${footer}\``;
+global.menutext = text;
