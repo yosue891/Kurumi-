@@ -22,18 +22,13 @@ let handler = async (m, { conn, text, args }) => {
         const video = search.videos[0]
         if (!video || !video.url) return conn.reply(m.chat, `No se encontró el video.`, m)
         const isDoc = /doc$/.test(text)
-        const cap = `
-\`\`\`
-⊜─⌈ 📻 ◜YouTube MP4◞ 📻 ⌋─⊜
-
-≡ 🎵 Título : ${video.title}
-≡ 📺 Canal : ${video.author.name}
-≡ ⏳ Duración : ${video.timestamp}
-≡ 👀 Vistas : ${video.views.toLocaleString()}
-≡ 📅 Publicado : ${video.ago}
-≡ 🔗 Enlace : ${video.url}
-≡ 🌳 Calidad : ${args[1] || "360"}
-\`\`\`
+        const cap = `*≡* ${video.title}
+*≡ 📺 Canal :* ${video.author.name}
+*≡ ⏳ Duración :* ${video.timestamp}
+*≡ 👀 Vistas :* ${video.views.toLocaleString()}
+*≡ 📅 Publicado :* ${video.ago}
+*≡ 🔗 Enlace :* ${video.url}
+*≡ 🌳 Calidad :* ${args[1] || "360"}
   ${footer}
 `
         if (isDoc) m.reply(cap)
@@ -66,6 +61,7 @@ await conn.sendFile(m.chat, path, `${video.title}.mp4`, (isDoc || fDoc) ? "" : c
 handler.command = ["ytv", "ytmp4", "ytmp4doc"]
 handler.help = ["ytmp4"]
 handler.tags = ["download"]
+handler.register = true
 export default handler
 
 async function ytmp4(url, quality) {
