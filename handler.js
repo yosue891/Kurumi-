@@ -542,17 +542,17 @@ Para desactivar esta función, escriba
 
 global.dfail = (type, m, conn) => {
     let msg = {
-        rowner: '👑 Este comando solo puede ser utilizado por el *Creador del bot*',
-        owner: '🔱 Este comando solo puede ser utilizado por el *Dueño del Bot*',
-        mods: '🔰  Esta función es solo para *Para moderadores del Bot*',
-        premium: '💠 Este comando es solo para miembros *Premium*\n\nEscribe */premium* para más info',
-        group: '⚙️ ¡Este comando solo se puede usar en grupos!',
-        private: '📮 Este comando solo se puede usar en el chat *privado del Bot*',
-        admin: '🛡️ Este comando es solo para *Admins* del grupo',
-        botAdmin: '💥 ¡Para usar este comando debo ser *Administrador!*',
-        unreg: '📇 Regístrese para usar esta función  Escribiendo:\n\n*/reg nombre.edad*\n\n📌Ejemplo : */reg Fz.16*',
-        restrict: '🔐 Esta característica está *deshabilitada*'
-    }[type]
+  rowner: `🌟 *Permiso Denegado*\n\n👑 Este comando solo puede ser utilizado por el *Creador del Bot*.`,
+  owner: `🌟 *Permiso Denegado*\n\n🔱 Este comando solo puede ser utilizado por el *Dueño del Bot*.`,
+  mods: `🌟 *Acceso Restringido*\n\n🔰 Esta función es exclusiva para *Moderadores del Bot*.`,
+  premium: `🌟 *Solo Premium*\n\n💠 Este comando está disponible únicamente para usuarios *Premium*.\n\n📌 Escribe */premium* para más información.`,
+  group: `🌟 *Comando de Grupo*\n\n⚙️ Este comando solo se puede usar dentro de *grupos*.`,
+  private: `🌟 *Comando Privado*\n\n📮 Este comando solo está disponible en el *chat privado del Bot*.`,
+  admin: `🌟 *Acceso Admin*\n\n🛡️ Este comando es exclusivo para *Administradores del grupo*.`,
+  botAdmin: `🌟 *Permiso Requerido*\n\n💥 Para usar este comando, necesito ser *Administrador del grupo*.`,
+  unreg: `🌟 *Registro Requerido*\n\n♥︎ ¡Debes registrarte para usar esta función!\n\n✏️ Usa: */reg nombre.edad*\n❢ Ejemplo: */reg Wirk.54*`,
+  restrict: `🌟 *Función Restringida*\n\n🔐 Esta característica está *deshabilitada* por el propietario del bot.`,
+}[type];
     if (msg) return m.reply(msg)
 }
 
