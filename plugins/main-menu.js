@@ -131,7 +131,7 @@ global.menu = async function getMenu() {
                 .filter(menu => menu.tags && menu.tags.includes(category) && menu.help)
                 .map(async menu => {
                     return await Promise.all(
-                        menu.help.map(async (cmd) => `✿ \`${await style(cmd, 10)}\``)
+                        menu.help.map(async (cmd) => `✿ ${await style(cmd, 10)}`)
                     );
                 })
         );
