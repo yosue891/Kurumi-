@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { promises as fs } from 'fs';
 
 let handler = async (m, { conn, usedPrefix }) => {
-    m.react("🍂");
+    m.react("🍫");
     let name = await conn.getName(m.sender);
     if (!global.menutext) {
       await global.menu();
@@ -30,7 +30,7 @@ let img = await fs.readFile("./src/menu.jpg");
           forwardingScore: 999,
           externalAdReply: {
             title: "",
-            body: `あ ${wm}`,
+            body: `✐ ${wm}`,
             thumbnail: img,
             sourceUrl: "",
             mediaType: 1,
@@ -128,7 +128,7 @@ global.menu = async function getMenu() {
       }));
 
     if (cmds.length > 0) {
-      text += `乂 \`${await style(tags[category], 7)}\`\n\n${cmds.map(cmdArray => cmdArray.join('\n')).join('\n')}\n\n`;
+      text += `✦ *${await style(tags[category], 7)}*\n\n${cmds.map(cmdArray => cmdArray.join('\n')).join('\n')}\n\n`;
     }
   }
   text += `\`${footer}\``;
