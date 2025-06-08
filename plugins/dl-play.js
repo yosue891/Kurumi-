@@ -2,8 +2,8 @@ import yts from "yt-search";
 import { ytv, yta } from "./_ytdl.js";
 const limit = 100;
 const handler = async (m, { conn, text, command }) => {
-  if (!text) return m.reply("🌴 Ingresa el nombre de un video o una URL de YouTube.");
-    m.react("🌱")
+  if (!text) return m.reply("> Ingresa el nombre de un video o una URL de YouTube.");
+    m.react("☕")
     let res = await yts(text);
     if (!res || !res.all || res.all.length === 0) {
       return m.reply("No se encontraron resultados para tu búsqueda.");
