@@ -1,4 +1,4 @@
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
+Process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
 import './config.js';
 import { createRequire } from 'module'
 import path, { join } from 'path'
@@ -34,7 +34,7 @@ protoType();
 serialize();
 
 global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') {
-  return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString();
+  return rmPrefix ? /file:\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString();
 }; global.__dirname = function dirname(pathURL) {
   return path.dirname(global.__filename(pathURL, true));
 }; global.__require = function require(dir = import.meta.url) {
@@ -380,16 +380,10 @@ global.reloadHandler = async function(restatConn) {
   return true;
 };
 
-// ===== [INICIO] SECCIÓN DE CONEXIÓN DE SUB-BOTS (MODIFICADA) =====
+// ===== [INICIO] SECCIÓN DE CONEXIÓN DE SUB-BOTS (CORREGIDA) =====
 
-/**
- * Maneja las actualizaciones de conexión para un sub-bot específico.
- * @param {string} subbotJid - El JID del sub-bot.
- * @param {object} update - El objeto de actualización de la conexión.
- */
 async function handleSubbotConnectionUpdate(subbotJid, update) {
     const { connection, lastDisconnect } = update;
-    const subbotConn = global.subbots[subbotJid];
     if (connection === 'open') {
         console.log(chalk.green(`🟢 Sub-bot [${subbotJid}] conectado y listo para recibir comandos.`));
     } else if (connection === 'close') {
@@ -397,17 +391,13 @@ async function handleSubbotConnectionUpdate(subbotJid, update) {
         console.log(chalk.red(`🔴 Sub-bot [${subbotJid}] desconectado. Razón: ${DisconnectReason[reason] || reason || 'desconocida'}.`));
         if (reason !== DisconnectReason.loggedOut) {
             console.log(chalk.yellow(`🟡 Intentando reconectar sub-bot [${subbotJid}]...`));
-            // La reconexión es manejada automáticamente por Baileys, pero aquí podríamos agregar lógica extra si falla repetidamente.
         } else {
             console.log(chalk.redBright(`❗️ La sesión del sub-bot [${subbotJid}] ha sido cerrada. Elimina su carpeta de sesión para volver a escanear.`));
-            delete global.subbots[subbotJid]; // Eliminar de la lista activa
+            delete global.subbots[subbotJid];
         }
     }
 }
 
-/**
- * Escanea el directorio de sub-bots, los reconecta y les asigna los manejadores de comandos.
- */
 async function reconnectSubbots() {
     const subbotsDir = path.join(__dirname, './Data/Sesiones/Subbots');
     console.log(chalk.blue('🔄 Verificando sesiones de sub-bots para reconectar...'));
@@ -447,18 +437,23 @@ async function reconnectSubbots() {
                     getMessage: async (key) => (store.loadMessage(key.remoteJid, key.id)?.message || undefined),
                 });
 
-                // **PASO 1: COPIAR PROPIEDADES IMPORTANTES**
-                // Copiamos las propiedades como 'welcome', 'bye', etc., del bot principal
-                // para que los manejadores funcionen correctamente.
-                Object.assign(subbotConn, {
-                    ...conn, // Copia todas las propiedades del bot principal
-                    isInit: false,
-                    well: false,
-                });
+                // **PASO 1: ASIGNAR PROPIEDADES NECESARIAS (CORREGIDO)**
+                // Se asignan manualmente las propiedades que el handler necesita.
+                // Esto evita el error de copiar propiedades de solo lectura.
+                subbotConn.welcome = conn.welcome;
+                subbotConn.bye = conn.bye;
+                subbotConn.spromote = conn.spromote;
+                subbotConn.sdemote = conn.sdemote;
+                subbotConn.sDesc = conn.sDesc;
+                subbotConn.sSubject = conn.sSubject;
+                subbotConn.sIcon = conn.sIcon;
+                subbotConn.sRevoke = conn.sRevoke;
+                
+                // También se pueden asignar otras propiedades seguras si son necesarias.
+                subbotConn.isInit = false;
+                subbotConn.well = false;
 
                 // **PASO 2: VINCULAR Y ASIGNAR MANEJADORES**
-                // Se vinculan los manejadores de eventos al 'subbotConn' específico.
-                // Esto asegura que 'this' dentro de los manejadores apunte al sub-bot correcto.
                 subbotConn.handler = handler.handler.bind(subbotConn);
                 subbotConn.participantsUpdate = handler.participantsUpdate.bind(subbotConn);
                 subbotConn.groupsUpdate = handler.groupsUpdate.bind(subbotConn);
@@ -473,8 +468,7 @@ async function reconnectSubbots() {
                 subbotConn.ev.on('message.delete', subbotConn.onDelete);
                 subbotConn.ev.on('connection.update', subbotConn.connectionUpdate);
                 subbotConn.ev.on('creds.update', subbotConn.credsUpdate);
-
-                // Almacena la conexión funcional en el objeto global
+                
                 global.subbots[subbotJid] = subbotConn;
             }
         }
