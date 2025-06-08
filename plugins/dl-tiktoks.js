@@ -30,6 +30,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 handler.command = ["ttsesearch", "tiktoks", "tts", "ttrndm", "ttks"];
 handler.help = ["ttsearch"];
 handler.tags = ["download"];
+handler.register = true;
 export default handler;
 
 async function ttks(query) {
@@ -54,7 +55,7 @@ async function ttks(query) {
     const shuffled = videos.sort(() => 0.5 - Math.random()).slice(0, 5);
     return {
       status: true,
-      creator: "I'm Fz~",
+      creator: "Made With Maycol And Wirk",
       data: shuffled.map(video => ({
         title: video.title,
         no_wm: video.play,
