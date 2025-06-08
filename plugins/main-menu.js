@@ -8,13 +8,13 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
   // Obtener el menú agrupado por tags
   const groups = {};
-  for (let cmd of global.plugins) {
-    if (!cmd.help || !cmd.tags) continue;
-    for (let tag of cmd.tags) {
-      if (!groups[tag]) groups[tag] = [];
-      groups[tag].push(cmd.help).flat();
-    }
+for (let cmd of Object.values(global.plugins)) {
+  if (!cmd.help || !cmd.tags) continue;
+  for (let tag of cmd.tags) {
+    if (!groups[tag]) groups[tag] = [];
+    groups[tag].push(cmd.help.flat());
   }
+}
 
   // Formar el texto del menú
   let cap = `⊂(◉‿◉)つ ¡Hola ${nombre}!\n✨ Aquí tienes tu menú personalizado:\n\n`;
