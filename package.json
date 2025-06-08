@@ -42,6 +42,7 @@
     "@whiskeysockets/baileys": "github:SYA-TEAM/Bai",
     "acrcloud": "^1.4.0",
     "api-dylux": "^1.8.5",
+    "senna-fg": "0.0.9",
     "aptoide-scraper": "^1.0.1",
     "archiver": "^7.0.1",
     "awesome-phonenumber": "^3.4.0",
