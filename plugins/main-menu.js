@@ -141,6 +141,6 @@ global.menu = async function getMenu() {
         }
     }
 
-    text += `${global.footer}`; // Assuming global.footer is defined elsewhere
+    text += ``; // Assuming global.footer is defined elsewhere
     global.menutext = text;
 };
