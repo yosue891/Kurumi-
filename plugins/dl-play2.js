@@ -1,3 +1,4 @@
+//CODE OFC DE YURU YURI 🥵
 import Starlights from '@StarlightsTeam/Scraper'
 import yts from 'yt-search'
 import fetch from 'node-fetch'
