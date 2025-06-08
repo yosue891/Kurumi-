@@ -35,6 +35,7 @@
   "license": "MIT",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
+    "@StarlightsTeam/Scraper": "github:Ado926/Starlights-Scraper",
     "@bochilteam/scraper": "^4.2.4",
     "@google/generative-ai": "^0.24.1",
     "@green-code/music-track-data": "^2.0.3",
