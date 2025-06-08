@@ -33,7 +33,7 @@ function verify() {
 }
 verify()
 
-say('Sylphy', {
+say('Yuru Yuri v1', {
   font: 'simple',
   align: 'left',
   gradient: ['green', 'white']
