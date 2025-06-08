@@ -34,5 +34,4 @@ const handler = async (m, { conn, text, args, usedPrefix, command }) => {
 handler.help = ["tiktok"];
 handler.tags = ["download"];
 handler.command = ["tt", "tiktok", "ttdl"];
-handler.register = true;
 export default handler;

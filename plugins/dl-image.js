@@ -107,6 +107,5 @@ let handler = async (m, { conn, text }) => {
 handler.help = ['image'];
 handler.command = ['image', 'img'];
 handler.tags = ["download"];
-handler.register = true;
 
 export default handler;

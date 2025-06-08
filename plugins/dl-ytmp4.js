@@ -61,7 +61,6 @@ await conn.sendFile(m.chat, path, `${video.title}.mp4`, (isDoc || fDoc) ? "" : c
 handler.command = ["ytv", "ytmp4", "ytmp4doc"]
 handler.help = ["ytmp4"]
 handler.tags = ["download"]
-handler.register = true
 export default handler
 
 async function ytmp4(url, quality) {

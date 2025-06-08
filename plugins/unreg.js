@@ -9,5 +9,4 @@ return conn.reply(m.chat, `${emoji} Tu registro fue borrado de mi base de datos.
 handler.help = ['unreg']
 handler.tags = ['rg']
 handler.command = ['unreg']
-handler.register = true
 export default handler

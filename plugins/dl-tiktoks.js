@@ -30,7 +30,6 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 handler.command = ["ttsesearch", "tiktoks", "tts", "ttrndm", "ttks"];
 handler.help = ["ttsearch"];
 handler.tags = ["download"];
-handler.register = true;
 export default handler;
 
 async function ttks(query) {
