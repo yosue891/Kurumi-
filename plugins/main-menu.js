@@ -7,32 +7,33 @@ let handler = async (m, { conn }) => {
   let fileName = `✦ ʏᴜʀᴜ ʏᴜʀɪ ✧`;
   let cap = global.menutext || "Aquí está el menú uwu~ (⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)⁠❤";
 
-  // API personalizada
-  let apiURL = `https://nightapi.is-a.dev/api/mayeditor?url=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAoH2L-_2H07icZqJWQ-1wJZRYXTAmlDJlgbcrYaoIswQsuR6M61b30JU&s=10&texto=¡Hola%20${encodeURIComponent(nombre)}!&textodireccion=Centro&fontsize=70`;
+  // Ruta de tu imagen base (la que quieres enviar como documento)
+  let localImageBuffer = await fs.readFile("./src/menu.jpg");
 
-  let imageBuffer;
-
-  try {
-    let res = await fetch(apiURL);
-    let json = await res.json();
-    if (json.success) {
-      const imgRes = await fetch(json.edited_url);
-      imageBuffer = await imgRes.buffer();
-    }
-  } catch (e) {
-    console.error("❌ Error en la API de miniatura:", e);
-    imageBuffer = await fs.readFile("./src/menu.jpg");
-  }
-
-  // Generar miniatura optimizada (JPEG, <200kb)
-  let miniThumbnail = await sharp(imageBuffer)
+  // Generar miniatura de ESA imagen (menor a 200KB)
+  let miniThumbnail = await sharp(localImageBuffer)
     .resize(200, 200)
     .jpeg({ quality: 70 })
     .toBuffer();
 
-  // Enviar como imagen-documento con miniatura
+  // Imagen de la API para el AdReply
+  let adreplyImage = miniThumbnail; // fallback en caso de error
+
+  try {
+    const apiURL = `https://nightapi.is-a.dev/api/mayeditor?url=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAoH2L-_2H07icZqJWQ-1wJZRYXTAmlDJlgbcrYaoIswQsuR6M61b30JU&s=10&texto=¡Hola%20${encodeURIComponent(nombre)}!&textodireccion=Centro&fontsize=70`;
+    const res = await fetch(apiURL);
+    const json = await res.json();
+    if (json.success) {
+      const imgRes = await fetch(json.edited_url);
+      adreplyImage = await imgRes.buffer();
+    }
+  } catch (e) {
+    console.warn("⚠️ Error al obtener miniatura de la API, se usa fallback");
+  }
+
+  // Enviar como documento con miniatura + adreply personalizada
   await conn.sendMessage(m.chat, {
-    document: imageBuffer,
+    document: localImageBuffer,
     mimetype: "image/jpeg",
     fileName,
     caption: cap,
@@ -40,11 +41,11 @@ let handler = async (m, { conn }) => {
     contextInfo: {
       externalAdReply: {
         title: `✨ Hola ${nombre} ✨`,
-        body: `Menu personalizado 😎`,
-        thumbnail: miniThumbnail,
+        body: `Menú personalizado 😎`,
+        thumbnail: adreplyImage,
         mediaType: 1,
         renderLargerThumbnail: true,
-        sourceUrl: "https://github.com", // tu página o repositorio si quieres
+        sourceUrl: "https://github.com", // reemplaza si quieres
       },
     },
   }, { quoted: m });
