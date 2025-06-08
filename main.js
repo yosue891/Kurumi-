@@ -1,4 +1,4 @@
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
+Process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
 import './config.js';
 import { createRequire } from 'module'
 import path, { join } from 'path'
@@ -104,6 +104,10 @@ global.loadChatgptDB = async function loadChatgptDB() {
 };
 loadChatgptDB();
 
+// ===== [INICIO] LÓGICA PARA RECONECTAR SUBBOTS =====
+// Almacenamiento global para las conexiones de los sub-bots
+global.subbots = {}; 
+// ===== [FIN] LÓGICA PARA RECONECTAR SUBBOTS =====
 
 global.authFile = global.Sesion
 const {state, saveState, saveCreds} = await useMultiFileAuthState(global.authFile)
@@ -273,7 +277,7 @@ if (opcion == '1' || methodCodeQR) {
     console.log(chalk.yellow('🌿-  Escanea el código QR.'));
  }}
   if (connection == 'open') {
-    console.log(chalk.yellow('🌱 ¡Conectado correctamente!'));
+    console.log(chalk.yellow('🌱 ¡Bot principal conectado correctamente!'));
   }
 let reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
 if (reason == 405) {
@@ -282,28 +286,28 @@ console.log(chalk.bold.redBright(`🍁 Conexión replazada, Por favor espere un 
 process.send('reset')}
 if (connection === 'close') {
     if (reason === DisconnectReason.badSession) {
-        conn.logger.error(`🌴 Sesión incorrecta, por favor elimina la carpeta ${global.authFile} y escanea nuevamente.`);
+        conn.logger.error(`🌴 Sesión incorrecta para el bot principal, por favor elimina la carpeta ${global.authFile} y escanea nuevamente.`);
         //process.exit();
     } else if (reason === DisconnectReason.connectionClosed) {
-        conn.logger.warn(`🌾 Conexión cerrada, reconectando...`);
+        conn.logger.warn(`🌾 Conexión cerrada (principal), reconectando...`);
         await global.reloadHandler(true).catch(console.error);
     } else if (reason === DisconnectReason.connectionLost) {
-        conn.logger.warn(`🌿 Conexión perdida con el servidor, reconectando...`);
+        conn.logger.warn(`🌿 Conexión perdida con el servidor (principal), reconectando...`);
         await global.reloadHandler(true).catch(console.error);
     } else if (reason === DisconnectReason.connectionReplaced) {
-        conn.logger.error(`🍀 Conexión reemplazada, se ha abierto otra nueva sesión. Por favor, cierra la sesión actual primero.`);
+        conn.logger.error(`🍀 Conexión reemplazada (principal), se ha abierto otra nueva sesión. Por favor, cierra la sesión actual primero.`);
         //process.exit();
     } else if (reason === DisconnectReason.loggedOut) {
-        conn.logger.error(`🌳 Conexion cerrada, por favor elimina la carpeta ${global.authFile} y escanea nuevamente.`);
+        conn.logger.error(`🌳 Conexion cerrada (principal), por favor elimina la carpeta ${global.authFile} y escanea nuevamente.`);
         //process.exit();
     } else if (reason === DisconnectReason.restartRequired) {
-        conn.logger.info(`🍃 Reinicio necesario, reinicie el servidor si presenta algún problema.`);
+        conn.logger.info(`🍃 Reinicio necesario (principal), reinicie el servidor si presenta algún problema.`);
         await global.reloadHandler(true).catch(console.error);
     } else if (reason === DisconnectReason.timedOut) {
-        conn.logger.warn(`🌲 Tiempo de conexión agotado, reconectando...`);
+        conn.logger.warn(`🌲 Tiempo de conexión agotado (principal), reconectando...`);
         await global.reloadHandler(true).catch(console.error);
     } else {
-        conn.logger.warn(`🍄 Razón de desconexión desconocida. ${reason || ''}: ${connection || ''}`);
+        conn.logger.warn(`🍄 Razón de desconexión desconocida (principal). ${reason || ''}: ${connection || ''}`);
         await global.reloadHandler(true).catch(console.error);
     }
 }
@@ -378,6 +382,92 @@ global.reloadHandler = async function(restatConn) {
   return true;
 };
 
+// ===== [INICIO] LÓGICA PARA RECONECTAR SUBBOTS =====
+
+/**
+ * Maneja las actualizaciones de conexión para un sub-bot específico.
+ * @param {string} subbotJid - El JID del sub-bot.
+ * @param {object} update - El objeto de actualización de la conexión.
+ */
+async function handleSubbotConnectionUpdate(subbotJid, update) {
+    const { connection, lastDisconnect } = update;
+    if (connection === 'open') {
+        console.log(chalk.green(`🟢 Sub-bot [${subbotJid}] conectado.`));
+    } else if (connection === 'close') {
+        const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+        console.log(chalk.red(`🔴 Sub-bot [${subbotJid}] desconectado. Razón: ${reason || 'desconocida'}.`));
+        // Aquí podrías agregar lógica de reconexión si es necesario, aunque Baileys ya lo intenta.
+        if (reason !== DisconnectReason.loggedOut) {
+            // Intenta reconectar si no fue un cierre de sesión explícito.
+            // La lógica de reconexión ya está implícita en Baileys, pero se podría forzar si es necesario.
+            console.log(chalk.yellow(`🟡 Intentando reconectar sub-bot [${subbotJid}]...`));
+        } else {
+            console.log(chalk.redBright(`❗️ La sesión del sub-bot [${subbotJid}] ha sido cerrada. Elimina la carpeta de sesión para volver a escanear.`));
+        }
+    }
+}
+
+/**
+ * Escanea el directorio de sub-bots y los reconecta.
+ */
+async function reconnectSubbots() {
+    const subbotsDir = path.join(__dirname, './Data/Sesiones/Subbots');
+    console.log(chalk.blue('🔄 Verificando sesiones de sub-bots para reconectar...'));
+
+    if (!fs.existsSync(subbotsDir)) {
+        console.log(chalk.yellow('🟡 Directorio de sub-bots no encontrado, omitiendo reconexión.'));
+        return;
+    }
+
+    try {
+        const subbotFolders = fs.readdirSync(subbotsDir);
+        for (const folder of subbotFolders) {
+            const subbotPath = path.join(subbotsDir, folder);
+            if (fs.statSync(subbotPath).isDirectory()) {
+                // El nombre de la carpeta es el número/JID del sub-bot
+                const subbotJid = folder;
+                const credsPath = path.join(subbotPath, 'creds.json');
+                
+                if (!fs.existsSync(credsPath)) {
+                    console.log(chalk.gray(`- Omitiendo [${subbotJid}], no se encontró creds.json.`));
+                    continue;
+                }
+
+                console.log(chalk.cyan(`🔌 Intentando conectar sub-bot con JID: ${subbotJid}`));
+
+                const { state: subbotState, saveCreds: saveSubbotCreds } = await useMultiFileAuthState(subbotPath);
+                
+                const subbotConn = makeWASocket({
+                    logger: pino({ level: 'silent' }),
+                    printQRInTerminal: false, // Nunca imprimir QR para sub-bots
+                    auth: {
+                        creds: subbotState.creds,
+                        keys: makeCacheableSignalKeyStore(subbotState.keys, pino({ level: 'silent' })),
+                    },
+                    browser: ["SubBot", "Chrome", "20.0.04"],
+                    syncFullHistory: false,
+                    markOnlineOnConnect: true,
+                    getMessage: async (key) => (store.loadMessage(key.remoteJid, key.id)?.message || undefined),
+                });
+
+                // Almacena la conexión en el objeto global
+                global.subbots[subbotJid] = subbotConn;
+
+                // Asigna manejadores de eventos específicos para este sub-bot
+                subbotConn.ev.on('connection.update', (update) => handleSubbotConnectionUpdate(subbotJid, update));
+                subbotConn.ev.on('creds.update', saveSubbotCreds);
+                
+                // Aquí podrías adjuntar más manejadores de eventos si los sub-bots necesitan procesar mensajes, etc.
+                // Por ejemplo: subbotConn.ev.on('messages.upsert', (m) => console.log(`Mensaje para ${subbotJid}:`, m));
+            }
+        }
+    } catch (error) {
+        console.error(chalk.red('❌ Error al intentar reconectar sub-bots:'), error);
+    }
+}
+
+// ===== [FIN] LÓGICA PARA RECONECTAR SUBBOTS =====
+
 const pluginFolder = global.__dirname(join(__dirname, './plugins/index'));
 const pluginFilter = (filename) => /\.js$/.test(filename);
 global.plugins = {};
@@ -425,6 +515,11 @@ global.reload = async (_ev, filename) => {
 Object.freeze(global.reload);
 watch(pluginFolder, global.reload);
 await global.reloadHandler();
+// ===== [INICIO] LÓGICA PARA RECONECTAR SUBBOTS =====
+// Llamar a la función de reconexión después de que el handler principal esté cargado
+reconnectSubbots();
+// ===== [FIN] LÓGICA PARA RECONECTAR SUBBOTS =====
+
 async function _quickTest() {
   const test = await Promise.all([
     spawn('ffmpeg'),
