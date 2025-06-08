@@ -62,8 +62,8 @@ for (let cmd of Object.values(global.plugins)) {
     jpegThumbnail: miniThumbnail,
     contextInfo: {
       externalAdReply: {
-        title: `✨ Menú de ${nombre}`,
-        body: `Comandos actualizados 🛠️`,
+        title: `Menu Solicitado Por ${nombre}`,
+        body: `🤍 Comandos actualizados 🛠️`,
         thumbnail: adreplyImage,
         mediaType: 1,
         renderLargerThumbnail: true,
