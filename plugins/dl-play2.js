@@ -1,67 +1,75 @@
-import fetch from 'node-fetch';
-import yts from 'yt-search';
+import fetch from 'node-fetch'
+import yts from 'yt-search'
 
-let handler = async (m, { conn, text, command }) => {
-  if (!text) return m.reply(`🍭 Ingrese el nombre de un video\n> *Ejemplo:* ${command} un verano sin ti`);
+let handler = async (m, { conn: star, args, usedPrefix, command }) => {
+  if (!args || !args[0]) {
+    return star.reply(
+      m.chat,
+      `*✎ ¡Ingresa el texto o enlace del vídeo de YouTube!*\n\n» *Ejemplo:*\n> *${usedPrefix + command}* Canción de ejemplo`,
+      m
+    )
+  }
 
-  m.react(rwait);
+  await m.react('🕓')
 
   try {
-    // Buscar video en YouTube usando yt-search
-    let search = await yts(text);
-    let vid = search.videos[0];
+    let query = args.join(' ')
+    let isUrl = /youtu/.test(query)
+    let video
 
-    if (!vid) return m.reply('❌ No se encontró ningún video. Prueba con otro nombre.');
-
-    let { title, timestamp, views, url, ago, author, image } = vid;
-
-    // Enviar detalles del video
-    await conn.sendMessage(m.chat, {
-      image: { url: image },
-      caption: `
-🎬 *Título:* ${title}
-⏱️ *Duración:* ${timestamp}
-📆 *Publicado:* ${ago}
-📊 *Vistas:* ${views.toLocaleString()}
-👤 *Canal:* ${author.name}
-🔗 *Link:* ${url}
-
-⌛ *Descargando video en calidad 480p...*`,
-    }, { quoted: m });
-
-    // Intentar descargar desde varias APIs
-    let video;
-    try {
-      video = await (await fetch(`https://api.neoxr.eu/api/youtube?url=${url}&type=video&quality=480p&apikey=GataDios`)).json();
-    } catch (e1) {
-      try {
-        video = await (await fetch(`https://api.fgmods.xyz/api/downloader/ytmp4?url=${url}&quality=480p&apikey=be9NqGwC`)).json();
-      } catch (e2) {
-        try {
-          video = await (await fetch(`https://api.alyachan.dev/api/ytv?url=${url}&apikey=uXxd7d`)).json();
-        } catch (e3) {
-          video = await (await fetch(`https://good-camel-seemingly.ngrok-free.app/download/mp4?url=${url}`)).json();
-        }
+    if (isUrl) {
+      let videoId = query.split('v=')[1]?.split('&')[0] || query.split('/').pop()
+      let ytres = await yts({ videoId })
+      video = ytres.videos[0]
+    } else {
+      let ytres = await yts(query)
+      video = ytres.videos[0]
+      if (!video) {
+        await m.react('✖️')
+        return star.reply(m.chat, '✦ *Video no encontrado.*', m)
       }
     }
 
-    let link = video?.data?.url || video?.download_url || video?.result?.dl_url || video?.downloads?.link?.[0];
-    if (!link) throw 'No se pudo obtener el enlace del video.';
+    let { title, thumbnail, timestamp, views, ago, url, author } = video
 
-    await conn.sendMessage(m.chat, {
-      video: { url: link },
-      mimetype: "video/mp4",
-      caption: `✅ *Descarga completada*\n📥 *${title}*`,
-    }, { quoted: m });
+    let res = await fetch(`https://api.siputzx.my.id/api/d/ytmp4?url=${url}`)
+    let json = await res.json()
 
-    m.react(done);
+    if (!json.data || !json.data.dl) {
+      await m.react('✖️')
+      return star.reply(m.chat, '✦ *Error al obtener el enlace de descarga desde la API.*', m)
+    }
 
+    let downloadUrl = json.data.dl
+    let txt = `*「✦」 » ${title}*\n\n`
+    txt += `> ✦ Canal » ${author.name}\n`
+    txt += `> ⴵ Duración » ${timestamp}\n`
+    txt += `> ✰ Vistas » ${views}\n`
+    txt += `> ✐ Publicación » ${ago}\n`
+    txt += `> ❒ Tamaño: » ${json.data.size}\n`
+    txt += `> 🜸 Link » ${url}`
+
+    await star.sendFile(m.chat, thumbnail, 'thumbnail.jpg', txt, m)
+
+    await star.sendMessage(
+      m.chat,
+      {
+        video: { url: downloadUrl },
+        mimetype: 'video/mp4',
+        fileName: `${title}.mp4`,
+        caption: title
+      },
+      { quoted: m }
+    )
+
+    await m.react('✅')
   } catch (e) {
-    console.error(e);
-    m.reply('❌ Hubo un error al procesar tu solicitud. Intenta nuevamente con otro nombre.');
-    m.react('❗');
+    console.error(e)
+    await m.react('✖️')
+    return star.reply(m.chat, '✦ Ocurrió un error al procesar tu solicitud. Intenta nuevamente más tarde.', m)
   }
-};
+}
 
-handler.command = ['play2'];
-export default handler;
+handler.command = ['play2', 'playvidoc']
+
+export default handler
