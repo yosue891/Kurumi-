@@ -1,56 +1,62 @@
-import sharp from "sharp";
-import { promises as fs } from "fs";
-import moment from "moment-timezone";
-import fetch from "node-fetch"; // Asegúrate de tener fetch o usa axios
+import fetch from 'node-fetch';
+import sharp from 'sharp';
+import { promises as fs } from 'fs';
+import moment from 'moment-timezone';
 
 let handler = async (m, { conn, usedPrefix }) => {
+  m.react("🍫");
+  let nombre = await conn.getName(m.sender);
+
+  // Llamada a la API para la miniatura
+  let apiUrl = `https://nightapi.is-a.dev/api/mayeditor?url=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAoH2L-_2H07icZqJWQ-1wJZRYXTAmlDJlgbcrYaoIswQsuR6M61b30JU&s=10&texto=¡Hola%20${encodeURIComponent(nombre)}!&textodireccion=Centro&fontsize=70`;
+  let edited_url = null;
+
   try {
-    m.react("🍫");
+    let resp = await fetch(apiUrl);
+    let json = await resp.json();
+    if (json.success && json.edited_url) edited_url = json.edited_url;
+    else throw new Error('API no devolvió imagen');
+  } catch (e) {
+    console.error('Error con API miniatura:', e);
+  }
 
-    let name = await conn.getName(m.sender);
-    if (!global.menutext) await global.menu();
+  await global.menu(); // genera global.menutext
 
-    // Mensaje con estilo cool y cariñoso
-    let greeting = ucapan();
-    let txt = `
-╔══════════════╗
-║  ✦ ʏᴜʀᴜ ʏᴜʀɪ ✧  ║
-╚══════════════╝
+  let cap = global.menutext;
+  let txt = `👋 ${ucapan()}, @${m.sender.split("@")[0]}!\n\n${cap}`;
+  let mentions = conn.parseMention(txt);
 
-👋 ${greeting}, @${m.sender.split("@")[0]}!
+  try {
+    // Thumbnail emoji
+    let imageBuffer;
+    if (edited_url) {
+      let fetchImg = await fetch(edited_url);
+      imageBuffer = await fetchImg.buffer();
+    } else {
+      imageBuffer = await sharp('./src/doc_image.jpg')
+        .resize(400, 400)
+        .toBuffer();
+    }
 
-${global.menutext}
+    let imgDoc = await fs.readFile("./src/menu.jpg");
 
-╔════════════════════════╗
-║  📌 Usa: ${usedPrefix}comando para probar ║
-╚════════════════════════╝
-(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)⁠❤
-`;
-
-    let mention = conn.parseMention(txt);
-
-    // Preparo la imagen y el thumbnail
-    let imager = await sharp("./src/doc_image.jpg").resize(400, 400).toBuffer();
-    let img = await fs.readFile("./src/menu.jpg");
-
-    // Enviar menú con imagen, estilo y todo
     await conn.sendMessage(
       m.chat,
       {
-        document: img,
-        fileName: "✦ ʏᴜʀᴜ ʏᴜʀɪ ✧.png",
+        document: imgDoc,
+        fileName: "✦ ʏᴜʀᴜ ʏᴜʀɪ ✧",
         mimetype: "image/png",
         caption: txt,
-        fileLength: 1900,
-        jpegThumbnail: imager,
+        fileLength: imgDoc.length,
+        jpegThumbnail: imageBuffer,
         contextInfo: {
-          mentionedJid: mention,
+          mentionedJid: mentions,
           isForwarded: true,
           forwardingScore: 999,
           externalAdReply: {
-            title: "Menu de MaycolBot",
+            title: `✨ Hola ${nombre} ✨`,
             body: `✐ ${global.wm}`,
-            thumbnail: img,
+            thumbnail: imageBuffer,
             sourceUrl: "",
             mediaType: 1,
             renderLargerThumbnail: true,
@@ -60,53 +66,22 @@ ${global.menutext}
       { quoted: m }
     );
 
-    // Ahora viene el chiste en TTS (sin texto)
-    // 1. Pido chiste random en inglés
-    const jokeRes = await fetch("https://nightapi.is-a.dev/api/jokes/random");
-    if (!jokeRes.ok) throw new Error("No se pudo obtener el chiste");
-    const jokeJson = await jokeRes.json();
-
-    // 2. Traduzco chiste a español
-    const textoParaTraducir = encodeURIComponent(jokeJson.joke);
-    const translateRes = await fetch(
-      `https://nightapi.is-a.dev/api/translate?text=${textoParaTraducir}&from=en&to=es`
-    );
-    if (!translateRes.ok) throw new Error("Error al traducir el chiste");
-    const translateJson = await translateRes.json();
-
-    const chisteES = translateJson.translated_text;
-
-    // 3. Genero link TTS con el texto en español
-    const ttsUrl = `https://nightapi.is-a.dev/api/tts?text=${encodeURIComponent(
-      "Chiste del día gracias a Yuru yuki: " + chisteES
-    )}&lang=es`;
-
-    // 4. Envío el audio TTS al chat, sin texto
-    await conn.sendMessage(
-      m.chat,
-      {
-        audio: { url: ttsUrl },
-        mimetype: "audio/mp3",
-        fileName: "chiste-del-dia.mp3",
-        ptt: false,
-      },
-      { quoted: m }
-    );
   } catch (e) {
-    // Si algo falla, enviamos el menú sin el audio pero no nos caemos
-    let fallbackTxt = `❎ Error en menú o chiste: ${e.message}`;
-    await conn.reply(m.chat, fallbackTxt, m);
+    await conn.reply(m.chat, txt, m, { mentions: mentions });
+    await conn.sendMessage(m.chat, `❎ Error mostrando menú: ${e.message}`, { quoted: m });
   }
+
+  await global.menu();
 };
 
-handler.command = ["menu", "help", "menú", "commands", "comandos", "?"];
+handler.command = ["menu","help","menú","commands","comandos","?"];
 export default handler;
 
 function ucapan() {
-  const time = moment.tz("America/Los_Angeles").format("HH");
-  if (time >= 18) return "Buenas noches 🌙";
-  if (time >= 15) return "Buenas tardes ☀️";
-  if (time >= 10) return "¡Hola! Buen día ☀️";
-  if (time >= 4) return "¡Buenos días! 🌅";
-  return "Hola 👋";
+  const h = parseInt(moment.tz("America/Lima").format("HH"));
+  return h >= 18 ? "Good night." :
+         h >= 15 ? "Good afternoon." :
+         h >= 10 ? "Good morning." :
+         h >= 4  ? "Good morning." :
+                   "Hello.";
 }
