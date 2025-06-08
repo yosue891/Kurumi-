@@ -4,7 +4,7 @@ let handler = async (m, { conn }) => {
   m.react('👋');
   let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender;
   let pp = await conn.profilePictureUrl(who).catch(_ => 'https://qu.ax/PRgfc.jpg');
-  let biografia = await conn.fetchStatus(`${suittag}@s.whatsapp.net`).catch(_ => 'Sin Biografía');
+  let biografia = await conn.fetchStatus(`50493732693@s.whatsapp.net`).catch(_ => 'Sin Biografía');
   let biografiaBot = await conn.fetchStatus(`${conn.user.jid.split('@')[0]}@s.whatsapp.net`).catch(_ => 'Sin Biografía');
   let bio = biografia.status?.toString() || 'Sin Biografía';
   let biobot = biografiaBot.status?.toString() || 'Sin Biografía';
@@ -13,7 +13,7 @@ let handler = async (m, { conn }) => {
   // Aquí agregamos ambos creadores
   await sendContactArray(conn, m.chat, [
     ['50493732693', 'Wirk', botname, 'No Hacer Spam', '⊹˚• Honduras •˚⊹', md, bio, 'Creador +50493732693'],
-    ['51921826291', 'Co-Creador', packname, 'Responsable', '⊹˚• Perú •˚⊹', channel, biobot, 'Creador +51 921 826 291']
+    ['51921826291', 'Maycol', packname, 'Responsable', '⊹˚• Perú •˚⊹', channel, biobot, 'Creador +51 921 826 291']
   ], m);
 }
 
