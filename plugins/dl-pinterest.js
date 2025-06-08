@@ -3,11 +3,11 @@ import baileys from '@whiskeysockets/baileys';
 import cheerio from 'cheerio';
 
 let handler = async (m, { conn, text, args }) => {
-  if (!text) return m.reply(`🌱 Ingresa un texto. Ejemplo: .pinterest Sylphiette`);
+  if (!text) return m.reply(`🤍 Ingresa un texto. Ejemplo: .pinterest Sylphiette`);
 
   try {
     if (text.includes("https://")) {
-      m.react("⌛");
+      m.react("🕒");
       let i = await dl(args[0]);
       let isVideo = i.download.includes(".mp4");
       await conn.sendMessage(m.chat, { [isVideo ? "video" : "image"]: { url: i.download }, caption: i.title }, { quoted: fkontak });
