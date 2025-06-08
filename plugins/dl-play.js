@@ -12,7 +12,7 @@ const handler = async (m, { conn, text, command }) => {
     let video = res.all[0];
     let total = Number(video.duration.seconds) || 0;
 
-    const cap = `> *「❀」${video.title}*
+    const cap = `*「❀」${video.title}*
 > *✧ Canal : »* ${video.author.name}
 > *✧ Duración : »* ${video.duration.timestamp}
 > *✧ Vistas : »* ${video.views}
