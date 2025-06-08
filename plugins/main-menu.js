@@ -8,7 +8,7 @@ let handler = async (m, { conn, usedPrefix }) => {
       await global.menu();
     }
     let cap = global.menutext;
-    let txt = `🍄 ${ucapan()}, @${m.sender.split("@")[0]} !\n\n${cap}`;
+    let txt = `👋 ${ucapan()}, @${m.sender.split("@")[0]} !\n\n${cap}`;
     let mention = conn.parseMention(txt)
 try {
 let imager = await sharp('./src/doc_image.jpg')
@@ -123,7 +123,7 @@ global.menu = async function getMenu() {
       .filter(menu => menu.tags && menu.tags.includes(category) && menu.help)
       .map(async menu => {
         return await Promise.all(
-          menu.help.map(async cmd => `𖦹 𓈒 \`${await style(cmd, 10)}\``)
+          menu.help.map(async cmd => `✿ \`\`\`${await style(cmd, 10)}\`\`\``)
         );
       })
   );
