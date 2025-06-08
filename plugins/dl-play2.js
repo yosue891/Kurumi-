@@ -1,61 +1,89 @@
-import fetch from 'node-fetch';
+import Starlights from '@StarlightsTeam/Scraper'
+import yts from 'yt-search'
+import fetch from 'node-fetch'
 
-let handler = async (m, { conn: star, usedPrefix, command, text }) => {
-  if (!text) {
-    return star.reply(
+let handler = async (m, { conn, args, usedPrefix, text, command }) => {
+  let formatos = ["mp3", "mp4", "mp3doc", "mp4doc"]
+  let [formato, ...busqueda] = text.split(" ")
+
+  if (!formatos.includes(formato)) {
+    return conn.reply(
       m.chat,
-      `*✎ ¡Ingresa el texto o enlace del vídeo de YouTube!*\n\n» *Ejemplo:*\n> *${usedPrefix + command}* crow edits`,
+      `✦ *Formato inválido.*\n\n` +
+      `🧩 *Usa el comando así:*\n> *${usedPrefix + command}* mp3 Alan Walker\n\n` +
+      `🎧 *Formatos válidos:*\n` +
+      `• mp3\n• mp3doc\n• mp4\n• mp4doc`,
       m
-    );
+    )
   }
 
-  await m.react('🕓');
+  if (!busqueda.length) {
+    return conn.reply(
+      m.chat,
+      `✦ *Falta el título del video.*\n\n` +
+      `🧩 *Ejemplo:*\n> *${usedPrefix + command}* mp4 Alan Walker - Faded`,
+      m
+    )
+  }
+
+  await m.react('🕓')
+
+  let res = await yts(busqueda.join(" "))
+  let video = res.videos[0]
+
+  let caption = `*「✦」 » ${video.title}*\n\n`
+  caption += `> ⏳ Duración » ${video.timestamp}\n`
+  caption += `> 👀 Visitas » ${formatNumber(video.views)}\n`
+  caption += `> 🎤 Autor » ${video.author.name}\n`
+  caption += `> 📅 Publicado » ${eYear(video.ago)}\n`
+  caption += `> 🔗 Enlace » https://youtu.be/${video.videoId}\n\n`
+  caption += `*Enviando..*`
+
+  await conn.sendFile(m.chat, video.thumbnail, 'thumb.jpg', caption, m)
 
   try {
-    // Buscar video en YouTube
-    let api = await (await fetch(`https://delirius-apiofc.vercel.app/search/ytsearch?q=${text}`)).json();
-    let result = api.data[0];
+    let data = formato.includes('mp3') ? await Starlights.ytmp3(video.url) : await Starlights.ytmp4(video.url)
+    let isDoc = formato.includes('doc')
+    let mimetype = formato.includes('mp3') ? 'audio/mpeg' : 'video/mp4'
 
-    let { title, duration, url, publishedAt, image } = result;
-
-    // Decoración estilo bonito
-    let txt = `*「✦」 » ${title}*\n\n`;
-    txt += `> ⏳ Duración » ${duration}\n`;
-    txt += `> ✐ Publicación » ${publishedAt}\n`;
-    txt += `> 🜸 Link » ${url}`;
-
-    await star.sendFile(m.chat, image, 'thumb.jpg', txt, m);
-
-    // Descargar usando API de Sylphy
-    let res = await fetch(`https://api.sylphy.xyz/download/ytmp4?url=${url}&apikey=sylph-da68348310`);
-    let json = await res.json();
-
-    if (!json || !json.data || !json.data.url) {
-      await m.react('✖️');
-      return star.reply(m.chat, '✦ *Error al obtener el video desde la API de Sylphy.*', m);
-    }
-
-    let downloadUrl = json.data.url;
-
-    await star.sendMessage(
+    await conn.sendMessage(
       m.chat,
       {
-        document: { url: downloadUrl },
-        mimetype: 'video/mp4',
-        fileName: `${title}.mp4`,
-        caption: `> Video solicitado`,
+        [isDoc ? 'document' : formato.includes('mp3') ? 'audio' : 'video']: { url: data.dl_url },
+        mimetype,
+        fileName: `${data.title}.${formato.includes('mp3') ? 'mp3' : 'mp4'}`
       },
       { quoted: m }
-    );
+    )
 
-    await m.react('✅');
+    await m.react('✅')
   } catch (e) {
-    console.error(e);
-    await m.react('✖️');
-    star.reply(m.chat, '✦ Ocurrió un error al procesar tu solicitud.', m);
+    console.error(e)
+    await m.react('✖️')
+    conn.reply(m.chat, '✦ Ocurrió un error al descargar el archivo.', m)
   }
-};
+}
 
-handler.command = ['pvideo', 'play2'];
+handler.help = ['play2 <formato> <búsqueda>']
+handler.tags = ['downloader']
+handler.command = ['ytplay', 'play2']
+export default handler
 
-export default handler;
+function eYear(txt) {
+  if (!txt) return '×'
+  const replacements = [
+    ['month ago', 'mes'], ['months ago', 'meses'],
+    ['year ago', 'año'], ['years ago', 'años'],
+    ['hour ago', 'hora'], ['hours ago', 'horas'],
+    ['minute ago', 'minuto'], ['minutes ago', 'minutos'],
+    ['day ago', 'día'], ['days ago', 'días']
+  ]
+  for (const [en, es] of replacements) {
+    if (txt.includes(en)) return 'hace ' + txt.replace(en, es).trim()
+  }
+  return txt
+}
+
+function formatNumber(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
