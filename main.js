@@ -346,8 +346,8 @@ global.reloadHandler = async function(restatConn) {
   }
 
   // DEFINIR ESTAS PROPIEDADES EN EL OBJETO 'conn'
-  conn.welcome = '*👋 Hola @user*\n\n                *W E L C O M E*\n⫹⫺ Grupo: @group\n\n⫹⫺ *Descripción:*\n@desc'
-  conn.bye = '👋 Byee @user\n\n                *G O O D B Y E*'
+  conn.welcome = '*👋 Hola @user*\n\n                *Bienvenid@ :>*\n⫹⫺ Grupo: @group\n\n⫹⫺ *Descripción:*\n@desc'
+  conn.bye = '👋 Byee @user\n\n                *Te esperamos pronto :D*'
   conn.spromote = '🌱 @user Fue promovido a administrador.`';
   conn.sdemote = '🍄 `@user Fue degradado de administrador.`';
   conn.sDesc = '🌳 `La descripción del grupo ha sido modificada.`';
