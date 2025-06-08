@@ -17,7 +17,7 @@ for (let cmd of Object.values(global.plugins)) {
 }
 
   // Formar el texto del menú
-  let cap = `⊂(◉‿◉)つ ¡Hola ${nombre}!\n✨ Aquí tienes tu menú personalizado:\n\n`;
+  let cap = `⊂(◉‿◉)つ ¡Hola ${nombre}!\n> Aquí tienes el menu:\n\n`;
 
   for (let tag in groups) {
     cap += `🌟 *${tag.toUpperCase()}*\n`;
