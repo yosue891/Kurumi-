@@ -10,18 +10,18 @@ let handler = async (m, { conn }) => {
       org: 'Creador',
       label: 'Creador +50493732693',
       region: 'Honduras',
-      email: 'wirksupport@example.com',
-      website: 'https://wirksite.com',
+      email: 'minexdt@gmail.com',
+      website: 'pronti',
       description: 'No hacer spam',
     },
     {
       number: '51921826291',
-      name: 'Maycol',
-      org: 'Co-Creador',
+      name: 'Maycol'
+      org: 'Creador',
       label: 'Creador +51 921 826 291',
       region: 'Perú',
-      email: 'maycol@example.com',
-      website: 'https://maycol.com',
+      email: 'karatekidamerica@gmail.com',
+      website: 'Pronto',
       description: 'Responsable',
     },
   ];
@@ -56,7 +56,7 @@ END:VCARD`.trim();
   }, { quoted: m });
 };
 
-handler.help = ['creadores', 'owner', 'dueño'];
+handler.help = ['creadores'];
 handler.tags = ['info'];
 handler.command = ['creador', 'owner', 'dueño', 'creadores'];
 
