@@ -27,7 +27,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     return conn.reply(m.chat, `Ocurrió un problema al obtener los videos:\n\n` + e, m);
   }
 };
-handler.command = ["ttsesearch", "tiktoks", "tts", "ttrndm", "ttks", "tiktoksearch"];
+handler.command = ["ttsesearch", "tiktoks", "ttrndm", "ttks", "tiktoksearch"];
 handler.help = ["ttsearch"];
 handler.tags = ["download"];
 export default handler;
