@@ -1,10 +1,5 @@
-/* 
-- tagall By Angel-OFC  
-- Etiqueta en un grupo a todos los miembros
-- https://whatsapp.com/channel/0029VaJxgcB0bIdvuOwKTM2Y
-*/
 const handler = async (m, { isOwner, isAdmin, conn, text, participants, args, command, usedPrefix }) => {
-  if (usedPrefix.toLowerCase() === 'a') return;
+  if (typeof usedPrefix === 'string' && usedPrefix.toLowerCase() === 'a') return;
 
   const customEmoji = global.db.data.chats[m.chat]?.customEmoji || '🌟';
   m.react(customEmoji);
