@@ -1,50 +1,40 @@
-import cheerio from "cheerio";
-import axios from "axios";
+import fetch from 'node-fetch';
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) throw `🌸 *Uso correcto:* ${usedPrefix + command} gatos`;
+let handler = async (m, { conn, args, usedPrefix, command }) => {
+  if (!args[0]) throw `✳️ Uso correcto: ${usedPrefix + command} <nombre_del_pack>`;
 
-  const res = await axios.get(`https://getstickerpack.com/stickers?query=${encodeURIComponent(text)}`);
-  const $ = cheerio.load(res.data);
-  const packs = [];
+  const packName = args.join('_'); // ejemplos: Animals, Funny, Cats
+  const apiUrl = `https://stickers.horner.tj/pack/${encodeURIComponent(packName)}`;
 
-  $("a.sticker-pack__name").each((_, el) => {
-    const url = "https://getstickerpack.com" + $(el).attr("href");
-    const name = $(el).text().trim();
-    packs.push({ name, url });
-  });
+  await conn.sendMessage(m.chat, { text: `🔎 Buscando pack: *${args.join(' ')}*...` }, { quoted: m });
 
-  if (!packs.length) throw `❌ No se encontraron stickers relacionados con *${text}*`;
+  try {
+    const res = await fetch(apiUrl);
+    if (res.status !== 200) throw new Error('Pack no encontrado');
 
-  let selected = packs[0];
-  const html = await axios.get(selected.url);
-  const $$ = cheerio.load(html.data);
-  const links = [];
+    const data = await res.json();
+    if (!data.stickers || !data.stickers.length) throw new Error('Sin stickers en el pack');
 
-  $$(".sticker-pack__images img").each((_, el) => {
-    const link = $$(el).attr("src");
-    if (link && link.includes("/stickers/")) links.push(link);
-  });
+    // Información del pack
+    const title = data.title || packName;
+    const count = data.stickers.length;
 
-  if (!links.length) throw "⚠ No se pudieron obtener imágenes del paquete.";
+    let reply = `⭐ *Pack encontrado:* ${title}\n🎫 *Stickers disponibles:* ${count}\n\nEnviando algunos...`;
+    await conn.sendMessage(m.chat, { text: reply }, { quoted: m });
 
-  let msg = `*🌸 Resultado de búsqueda:* ${selected.name}\n\n`;
-  msg += `💫 Stickers encontrados: ${links.length}\n`;
-  msg += `🔗 Enlace: ${selected.url}`;
-
-  await conn.sendMessage(m.chat, { text: msg }, { quoted: m });
-
-  for (let i = 0; i < Math.min(8, links.length); i++) {
-    await conn.sendImageAsSticker(m.chat, links[i], m, {
-      packname: "StickerSearch",
-      author: "MaiBot"
-    });
-    await new Promise(res => setTimeout(res, 1000)); // evita spam masivo
+    // Envía hasta 8 stickers
+    for (let i = 0; i < Math.min(8, count); i++) {
+      const url = `https://stickers.horner.tj/sticker/${data.stickers[i]}.png`;
+      await conn.sendFile(m.chat, url, 'sticker.png', '', m, { asSticker: true });
+    }
+  } catch (e) {
+    console.error(e);
+    await conn.sendMessage(m.chat, { text: `⚠️ Error: ${e.message}` }, { quoted: m });
   }
 };
 
-handler.help = ["stickersearch <tema>"];
-handler.tags = ["sticker"];
-handler.command = ["stickersearch", "buscarsticker", "stickersde"]; // alias opcionales
+handler.help = ['stickersearch <pack_name>'];
+handler.tags = ['sticker'];
+handler.command = ['stickersearch', 'stickerpack'];
 
 export default handler;
