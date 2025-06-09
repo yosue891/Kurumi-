@@ -9,7 +9,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   // Detectar si es el bot principal o un sub bot
   let mainBotNumber = '50493059810@s.whatsapp.net'; // <-- Número del bot principal (ajusta según sea necesario)
   let esPrincipal = conn.user.jid === mainBotNumber;
-  let estadoBot = esPrincipal ? '🤖 *Bot Principal*' : '📦 *Sub Bot*';
+  let estadoBot = esPrincipal ? '\`✧ Bot:\` *Principal*' : '\`✧ Bot:\` *Sub Bot*';
 
   // Obtener el menú agrupado por tags
   const groups = {};
