@@ -21,5 +21,6 @@ const handler = async (m, { conn, isGroup, participants, usedPrefix, command }) 
 handler.help = ['invocar'];
 handler.tags = ['group'];
 handler.command = /^invocar$/i;
+handler.group = true;
 
 export default handler;
