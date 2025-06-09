@@ -8,32 +8,15 @@ const handler = async (m, { conn }) => {
 
   let activos = [];
   let inactivos = [];
-  let debug = [];
 
   for (const [id, sock] of bots) {
-    // Detectar si está activo
-    let isActivo = false;
+    let isActivo = (typeof sock?.ev === 'object') && (typeof sock?.sendPresenceUpdate === 'function');
     
-    if (sock?.ws?.readyState === 1) {
-      isActivo = true;
-    } else if (typeof sock?.ev === 'object') {
-      isActivo = true;
-    } else if (typeof sock?.sendPresenceUpdate === 'function') {
-      isActivo = true;
-    }
-
     if (isActivo) {
       activos.push(`✅ ${id}`);
     } else {
       inactivos.push(`❌ ${id}`);
     }
-
-    debug.push(`🧩 Bot: ${id}
-- ws: ${!!sock?.ws}
-- ws.readyState: ${sock?.ws?.readyState}
-- ev: ${!!sock?.ev}
-- sendPresenceUpdate: ${typeof sock?.sendPresenceUpdate === 'function'}
-`);
   }
 
   const mensaje = `
@@ -44,9 +27,6 @@ ${activos.join('\n') || '🤖 Ninguno'}
 ╭━━ ⭑ *Sub Bots Inactivos* ⭑ ━━╮
 ${inactivos.join('\n') || '✅ Todos están activos'}
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
-
-📊 *Debug técnico:*
-${debug.join('\n')}
 `.trim();
 
   m.reply(mensaje);
