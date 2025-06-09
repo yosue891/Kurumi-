@@ -8,104 +8,118 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
 
-const handler = async (m, { conn }) => {
-  if (global.conn.user.jid !== conn.user.jid) {
-    return conn.sendMessage(m.chat, {
-      text:
-        '🚫 *Acceso Denegado*\n\n' +
-        'Este comando está reservado exclusivamente para el número principal del bot.\n' +
-        'Por favor, utilícelo desde la cuenta autorizada.',
-    }, { quoted: m });
-  }
+const cleanFolder = async (folderPath, excludeFiles = []) => {
+  if (!existsSync(folderPath)) return { deletedFiles: 0, freedBytes: 0, error: `⚠️ La carpeta ${folderPath} no existe.` };
 
+  let deletedFiles = 0;
+  let freedBytes = 0;
+
+  try {
+    const files = await fs.readdir(folderPath);
+
+    for (const file of files) {
+      if (excludeFiles.includes(file)) continue;
+
+      const fullPath = path.join(folderPath, file);
+      const stats = statSync(fullPath);
+      if (stats.isFile()) {
+        await fs.unlink(fullPath);
+        deletedFiles++;
+        freedBytes += stats.size;
+      }
+    }
+    return { deletedFiles, freedBytes, error: null };
+  } catch (e) {
+    return { deletedFiles: 0, freedBytes: 0, error: `❌ Error limpiando ${folderPath}: ${e.message}` };
+  }
+};
+
+const handler = async (m, { conn }) => {
+  const jidBot = conn.user.jid;
+  const jidMain = global.conn.user.jid;
+
+  // Permitimos ejecutar solo en principal o subbots (cualquier subcarpeta en ./Data/Sesiones/Subbots)
+  const isMainBot = jidBot === jidMain;
+  const subbotsBase = './Data/Sesiones/Subbots/';
+  const isSubbot = jidBot.startsWith(jidMain.split('@')[0]) === false && existsSync(subbotsBase) && (await fs.readdir(subbotsBase)).some(folder => jidBot.startsWith(folder));
+
+  // Alternativa más simple: si no es principal, asumimos subbot y limpiamos su carpeta si existe.
+  // O mejor: si no principal, limpiamos tmp + ./Data/Sesiones/Subbots/[número-del-jid]/ si existe
+
+  // Extraemos número del jid para subbot
+  const jidNumber = jidBot.split('@')[0];
+  const subbotPath = path.join(subbotsBase, jidNumber);
+
+  // Enviar mensaje inicial
   await conn.sendMessage(m.chat, {
     text:
-      '🔄 *Inicio del Proceso de Limpieza*\n\n' +
-      'Se procederá a eliminar archivos temporales y de sesión innecesarios, preservando únicamente los archivos esenciales para el funcionamiento.\n' +
-      'Por favor, espere...',
+      '🧹 *Iniciando Limpieza Avanzada de Sesiones*\n\n' +
+      '➤ Se eliminarán archivos temporales y de sesión innecesarios para liberar espacio y optimizar el funcionamiento.\n' +
+      '➤ Los archivos esenciales, como "creds.json", serán preservados.\n' +
+      '⏳ Por favor, espere un momento...',
   }, { quoted: m });
 
-  const targets = [
-    { path: './tmp', exclude: [] },
-    { path: './Data/Sesiones/Principal', exclude: ['creds.json'] },
-    { path: './Data/Sesiones/Subbots', exclude: ['creds.json'] }
-  ];
+  let report = '';
 
-  let totalDeletedFiles = 0;
-  let totalFreedSpace = 0;
-  let detailedLog = '';
+  // Siempre limpiar ./tmp (excepto si quieres excluir algo ahí, acá borramos todo)
+  const tmpClean = await cleanFolder('./tmp');
+  if (tmpClean.error) {
+    report += `${tmpClean.error}\n\n`;
+  } else {
+    report += `✅ Carpeta ./tmp limpiada\n• Archivos eliminados: ${tmpClean.deletedFiles}\n• Espacio liberado: ${formatSize(tmpClean.freedBytes)}\n\n`;
+  }
 
-  for (const { path: folderPath, exclude } of targets) {
-    if (!existsSync(folderPath)) {
-      detailedLog += `⚠️ Carpeta no encontrada o vacía: ${folderPath}\n\n`;
-      continue;
+  if (isMainBot) {
+    // Limpiar carpeta Principal
+    const principalClean = await cleanFolder('./Data/Sesiones/Principal', ['creds.json']);
+    if (principalClean.error) {
+      report += `${principalClean.error}\n\n`;
+    } else {
+      report += `✅ Carpeta ./Data/Sesiones/Principal limpiada\n• Archivos eliminados: ${principalClean.deletedFiles}\n• Espacio liberado: ${formatSize(principalClean.freedBytes)}\n\n`;
     }
 
-    try {
-      const files = await fs.readdir(folderPath);
-      let deletedFilesCount = 0;
-      let freedSpaceBytes = 0;
-
-      for (const file of files) {
-        if (!exclude.includes(file)) {
-          const fullPath = path.join(folderPath, file);
-          const stats = statSync(fullPath);
-
-          if (stats.isFile()) {
-            await fs.unlink(fullPath);
-            deletedFilesCount++;
-            freedSpaceBytes += stats.size;
+    // Limpiar todas las subcarpetas en ./Data/Sesiones/Subbots
+    if (existsSync(subbotsBase)) {
+      const subFolders = await fs.readdir(subbotsBase);
+      if (subFolders.length === 0) {
+        report += `ℹ️ No se encontraron subbots en ${subbotsBase}\n\n`;
+      } else {
+        for (const folder of subFolders) {
+          const folderPath = path.join(subbotsBase, folder);
+          const cleanRes = await cleanFolder(folderPath, ['creds.json']);
+          if (cleanRes.error) {
+            report += `${cleanRes.error}\n\n`;
+          } else {
+            report += `✅ Subbot ${folder} limpiado\n• Archivos eliminados: ${cleanRes.deletedFiles}\n• Espacio liberado: ${formatSize(cleanRes.freedBytes)}\n\n`;
           }
         }
       }
-
-      totalDeletedFiles += deletedFilesCount;
-      totalFreedSpace += freedSpaceBytes;
-
-      if (deletedFilesCount > 0) {
-        detailedLog +=
-          `✅ Limpieza exitosa en: ${folderPath}\n` +
-          `• Archivos eliminados: ${deletedFilesCount}\n` +
-          `• Espacio liberado: ${formatSize(freedSpaceBytes)}\n\n`;
+    } else {
+      report += `ℹ️ Carpeta de subbots no existe: ${subbotsBase}\n\n`;
+    }
+  } else {
+    // Subbot: limpiar solo su carpeta de sesión + ./tmp
+    if (existsSync(subbotPath)) {
+      const subbotClean = await cleanFolder(subbotPath, ['creds.json']);
+      if (subbotClean.error) {
+        report += `${subbotClean.error}\n\n`;
       } else {
-        detailedLog += `ℹ️ No se eliminaron archivos en: ${folderPath}\n\n`;
+        report += `✅ Carpeta de sesión del subbot (${jidNumber}) limpiada\n• Archivos eliminados: ${subbotClean.deletedFiles}\n• Espacio liberado: ${formatSize(subbotClean.freedBytes)}\n\n`;
       }
-    } catch (error) {
-      detailedLog += `❌ Error procesando ${folderPath}: ${error.message}\n\n`;
+    } else {
+      report += `ℹ️ Carpeta de sesión para subbot ${jidNumber} no existe: ${subbotPath}\n\n`;
     }
   }
 
-  if (totalDeletedFiles === 0) {
-    await conn.sendMessage(m.chat, {
-      text:
-        '🔔 *Proceso de Limpieza Finalizado*\n\n' +
-        'No se encontraron archivos que requieran eliminación.\n' +
-        'Todos los archivos esenciales permanecen intactos para asegurar la estabilidad del bot.',
-    }, { quoted: m });
-  } else {
-    await conn.sendMessage(m.chat, {
-      text:
-        '✅ *Proceso de Limpieza Completado*\n\n' +
-        `• Total de archivos eliminados: ${totalDeletedFiles}\n` +
-        `• Espacio total liberado: ${formatSize(totalFreedSpace)}\n\n` +
-        'Detalle por carpeta:\n' +
-        '────────────────────────────\n' +
-        detailedLog +
-        '────────────────────────────\n' +
-        '📌 Se conservaron todos los archivos imprescindibles para el funcionamiento correcto del bot.',
-    }, { quoted: m });
-  }
+  report += '✔️ *Limpieza completada con éxito.*\n';
 
-  await conn.sendMessage(m.chat, {
-    text:
-      '🔹 Para actualizar el estado, envíe cualquier comando.\n' +
-      '🔹 Bot optimizado y funcionando en óptimas condiciones.',
-  }, { quoted: m });
+  // Enviar reporte final
+  await conn.sendMessage(m.chat, { text: report.trim() }, { quoted: m });
 };
 
-handler.help = ['limpiar'];
+handler.help = ['limpiar', 'cleanallsession', 'dsowner'];
 handler.tags = ['owner'];
-handler.command = /^limpiar$/i;
-handler.rowner = false;
+handler.command = /^(limpiar|cleanallsession|del_reg_in_session_owner|dsowner|clearallsession)$/i;
+handler.rowner = true;
 
 export default handler;
