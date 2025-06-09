@@ -66,6 +66,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     caption: cap,
     jpegThumbnail: miniThumbnail,
     contextInfo: {
+      ...global.rcanal.contextInfo,
       externalAdReply: {
         title: `Menu solicitado por ${nombre}`,
         body: `🤍 Comandos actualizados 🛠️`,
