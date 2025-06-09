@@ -68,7 +68,7 @@ const handler = async (m, { conn, text, command }) => {
         audio: { url: api.downloadUrl },
         mimetype: "audio/mpeg",
         fileName: `${video.title}.mp3`,
-        ptt: true
+        ptt: false
       }, { quoted: m });
 
       await m.react("✅");
@@ -115,7 +115,7 @@ const handler = async (m, { conn, text, command }) => {
 };
 
 handler.help = ["play"];
-handler.tags = ["descargas"];
+handler.tags = ["download"];
 handler.command = ["play"];
 
 export default handler;
