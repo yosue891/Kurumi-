@@ -1,33 +1,43 @@
-const wm = global.wm || 'TuBot';
+/* 
+- tagall By Angel-OFC  
+- Etiqueta en un grupo a todos los miembros
+- https://whatsapp.com/channel/0029VaJxgcB0bIdvuOwKTM2Y
+*/
+const handler = async (m, { isOwner, isAdmin, conn, text, participants, args, command, usedPrefix }) => {
+  if (usedPrefix.toLowerCase() === 'a') return;
 
-const handler = async (m, { conn }) => {
-  const isGroup = m.chat.endsWith('@g.us');
+  const customEmoji = global.db.data.chats[m.chat]?.customEmoji || '🌟';
+  m.react(customEmoji);
 
-  if (!isGroup) {
-    return await conn.sendMessage(m.chat, { text: '❗ Este comando solo puede usarse dentro de un grupo.' }, { quoted: m });
+  if (!(isAdmin || isOwner)) {
+    global.dfail('admin', m, conn);
+    throw false;
   }
 
-  try {
-    const metadata = await conn.groupMetadata(m.chat);
-    const participants = metadata.participants;
-    const mentions = participants.map(user => user.id);
+  const mensajePersonalizado = args.length ? args.join(' ') : 'Les hago una cordial invitación a todos los miembros del grupo para participar activamente.';
+  const totalMiembros = participants.length;
 
-    const messageText = `🔥 *${wm}* los invoca, presentense pinchis guapos 🔥\n\n`;
+  let texto = `📢 *NOTIFICACIÓN GENERAL* 📢\n\n`;
+  texto += `👥 *Para ${totalMiembros} miembros*\n\n`;
+  texto += `📝 *Mensaje:* ${mensajePersonalizado}\n\n`;
+  texto += `──────────────────────────────\n`;
+  texto += `🔔 ${customEmoji} Invitación enviada por *${global.botname || 'el bot'}*\n\n`;
 
-    await conn.sendMessage(m.chat, {
-      text: messageText,
-      mentions
-    }, { quoted: m });
-
-  } catch (error) {
-    console.error('Error al invocar miembros:', error);
-    await conn.sendMessage(m.chat, { text: '⚠️ Ocurrió un error al invocar a los miembros del grupo.' }, { quoted: m });
+  for (const miembro of participants) {
+    texto += `➥ ${customEmoji} @${miembro.id.split('@')[0]}\n`;
   }
+
+  texto += `──────────────────────────────\n`;
+  texto += `🛡️ *Versión:* ${global.vs || '1.0.0'}\n`;
+  texto += `🤖 *¡Gracias por ser parte de esta comunidad!*`;
+
+  await conn.sendMessage(m.chat, { text: texto, mentions: participants.map(a => a.id) }, { quoted: m });
 };
 
-handler.help = ['invocar'];
+handler.help = ['todos *<mensaje opcional>*'];
 handler.tags = ['group'];
-handler.command = /^invocar$/i;
+handler.command = ['todos', 'invocar', 'tagall'];
+handler.admin = true;
 handler.group = true;
 
 export default handler;
