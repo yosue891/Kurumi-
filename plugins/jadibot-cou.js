@@ -76,22 +76,22 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
         let codeBot = await conn.requestPairingCode(cleanedNumber);
         codeBot = codeBot?.match(/.{1,4}/g)?.join("-") || codeBot;
 
+        // 📲 INSTRUCCIONES
         const txt = `
-┌━━━❖ *Conexion via code*❖━━━┐
-│ 📱 *Pasos para Vincular tu Cuenta:*
-│   1️⃣ Abre WhatsApp
-│   2️⃣ Toca los 3 puntos arriba
-│   3️⃣ Ingresa a *Dispositivos vinculados*
-│   4️⃣ Presiona *Vincular con el número de teléfono*
-│   5️⃣ Ingresa el siguiente código:
-└━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┘
+╭━━ 🎀 *Vincula tu número* 🎀 ━━╮
+┃ 📱 *Pasos:*
+┃ 1. Abre WhatsApp
+┃ 2. Toca los 3 puntos (⋮)
+┃ 3. Ve a *Dispositivos vinculados*
+┃ 4. Toca *Vincular con número*
+┃ 5. Ingresa el siguiente código:
+╰━━━━━━━━━━━━━━━━━━━━━━╯`.trim();
 
-🔑 *Código:* ${codeBot}
+        // 🔑 CÓDIGO
+        const txtCode = `🔐 *Tu código es:* \n\n🔹 *${codeBot}*`;
 
-🌸 *Nota:* Este código solo funciona en el número desde el cual se solicitó.
-`;
-
-        await parent.reply(m.chat, txt.trim(), m);
+        await parent.reply(m.chat, txt, m);
+        await parent.reply(m.chat, txtCode, m);
         rl.close();
       }, 3000);
     }
@@ -112,7 +112,7 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
         global.conns.splice(i, 1);
         fs.rmSync(userFolderPath, { recursive: true, force: true });
         if (code !== DisconnectReason.connectionClosed) {
-          parent.sendMessage(m.chat, { text: "⚠️ Conexión perdida..." }, { quoted: m });
+          parent.sendMessage(m.chat, { text: "⚠️ *Conexión perdida...*" }, { quoted: m });
         }
       }
 
@@ -120,20 +120,19 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
         conn.isInit = true;
         global.conns.push(conn);
 
-        await parent.reply(m.chat, args[0] ? '✅ Conectado exitosamente.' : `
-🎀 *Sub Bot Conectado Correctamente* 🎀
-
-✨ Ya estás conectado a *Yuru Yuri* como sub bot.
-📌 Si se desconecta, usa el comando *${usedPrefix}code* nuevamente.
-
-👤 Usuario vinculado: @${authFolderB}
-`.trim(), m);
+        await parent.reply(m.chat, args[0] ? '✅ *Sub Bot conectado exitosamente.*' : `
+╭━━ 🎉 *¡Sub Bot Conectado!* 🎉 ━━╮
+┃ 🍫 *Yuru Yuri activada como Sub Bot*
+┃ 📡 Conexión establecida correctamente
+┃ 🧾 Usa *${usedPrefix}code* si se desconecta
+┃ 👤 Usuario vinculado: @${authFolderB}
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`.trim(), m);
 
         await sleep(3000);
 
         if (!args[0]) {
           await parent.sendMessage(conn.user.jid, {
-            text: `📎 Guarda este mensaje para reconectar sin pedir otro código:\n\n${usedPrefix + command + " " + Buffer.from(fs.readFileSync(`${userFolderPath}/creds.json`), "utf-8").toString("base64")}`
+            text: `📎 *Guarda este mensaje para reconectar rápido:*\n\n${usedPrefix + command + " " + Buffer.from(fs.readFileSync(`${userFolderPath}/creds.json`), "utf-8").toString("base64")}`
           }, { quoted: m });
         }
       }
