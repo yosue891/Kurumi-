@@ -2,7 +2,7 @@ import crypto from "crypto"
 let handler = async(m, { conn, text, args }) => {
       let ya = text && m.quoted ? (m.quoted.text ? text + '\n\n' + m.quoted.text : text) : text ? text : (m.quoted ? (m.quoted.text ? m.quoted.text : false) : false);
       if (!ya) {
-         return conn.reply(m.chat, `🌱 Ejemplo: carbon <text / quoted text>`, m);
+         return conn.reply(m.chat, `🌱 Ejemplo: carbon <text / quoted text>`, m, rcanal);
       }
 m.react('⏳');
       let old = new Date()
@@ -17,7 +17,7 @@ handler.tags =['tools']
 export default handler
 
 async function carbon(input) {
-   let cap = `//-- Powered By Sylphiette's\n\n` + input;
+   let cap = `//-- Powered By Yuri Yuri\n\n` + input;
    let Blobs = await fetch("https://carbonara.solopov.dev/api/cook", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
