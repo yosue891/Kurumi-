@@ -8,7 +8,7 @@ import sharp from 'sharp'
 let handler = async (m, { conn, args, command, usedPrefix }) => {
   if (args[0] === '---i') {
     let helpText = `
-🌿 \`Lista de Formas y Efectos Disponibles :\`
+✦❂❂ \`Lista de Formas y Efectos Disponibles :\`
 
 *Formas:*
 - -c : Crea un sticker circular
@@ -45,7 +45,7 @@ let handler = async (m, { conn, args, command, usedPrefix }) => {
 - -negate : Negatiza la imagen
 - -tint : Aplica un tinte de color a la imagen (rojo por defecto)
 
-🌾 \`Ejemplo :\`
+❀ \`Ejemplo :\`
 ${usedPrefix + command} -c -blur Texto | Autor
 `
     return m.reply(helpText)
@@ -58,13 +58,13 @@ ${usedPrefix + command} -c -blur Texto | Autor
 
     if (/webp|image|video/g.test(mime)) {
       if (/video/g.test(mime) && (q.msg || q).seconds > 15) {
-        return m.reply(`🌱 ¡El video no puede durar más de 15 segundos!...`)
+        return m.reply(`✧ ¡El video no puede durar más de 15 segundos!...`)
       }
 
       let img = await q.download?.()
 
       if (!img) {
-        return conn.reply(m.chat, `🌿 Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"---i"*`, m)
+        return conn.reply(m.chat, `> ✐ Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"---i"*`, m)
       }
 
       let out
