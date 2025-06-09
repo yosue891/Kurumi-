@@ -8,7 +8,7 @@ import { fileTypeFromBuffer } from "file-type";
 let handler = async (m, { conn }) => {
   let q = m.quoted || m;
   let mime = (q.msg || q).mimetype || '';
-  if (!mime) return conn.reply(m.chat, `📎 Por favor responde a un archivo válido (imagen, video, documento, etc).`, m);
+  if (!mime) return conn.reply(m.chat, `📎 Por favor responde a un archivo válido (imagen, video, documento, etc).`, m, rcanal);
 
   await m.react('🕒');
 
@@ -26,17 +26,17 @@ let handler = async (m, { conn }) => {
     txt += `*🔗 Enlace:* ${info.url}\n\n`;
     txt += `> 🌐 *Servicio proporcionado por Wirk*`;
 
-    await conn.sendFile(m.chat, media, info.fileName, txt, m);
+    await conn.sendFile(m.chat, media, info.fileName, txt, m, rcanal);
     await m.react('✅');
   } catch (err) {
     console.error(err);
     await m.react('❌');
-    await conn.reply(m.chat, `🚫 Hubo un error al subir el archivo a WirksiBox. Intenta de nuevo más tarde.`, m);
+    await conn.reply(m.chat, `🚫 Hubo un error al subir el archivo a WirksiBox. Intenta de nuevo más tarde.`, m, rcanal);
   }
 };
 
-handler.help = ['wirksibox'];
-handler.tags = ['uploader'];
+handler.help = ['tourl'];
+handler.tags = ['tools'];
 handler.command = ['wirksibox', 'tourl'];
 export default handler;
 
