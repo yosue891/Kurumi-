@@ -1,50 +1,78 @@
 import fs from 'fs';
-import ws from 'ws';
-const { CONNECTING, OPEN } = ws;
+import pino from 'pino';
+import { useMultiFileAuthState, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser } from '@whiskeysockets/baileys';
+import { makeWASocket } from '../lib/simple.js';
 
-function isConnActive(conn, user) {
-  if (!conn.user || !conn.user.id) return false;
+async function testConnection(sessionPath) {
+  return new Promise(async (resolve) => {
+    try {
+      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+      const { version } = await fetchLatestBaileysVersion();
 
-  const userId = user.toLowerCase();
-  const connId = conn.user.id.toLowerCase();
+      const conn = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        auth: {
+          creds: state.creds,
+          keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' })),
+        },
+        version,
+        printQRInTerminal: false,
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+      });
 
-  // Compara solo la parte antes de '@'
-  const connNumber = connId.split('@')[0];
-  const userNumber = userId.split('@')[0];
+      // Timeout para no esperar demasiado
+      const timeout = setTimeout(() => {
+        conn.ev.removeAllListeners();
+        conn.ws.close();
+        resolve(false);
+      }, 7000);
 
-  if (connNumber !== userNumber) return false;
+      conn.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'open') {
+          clearTimeout(timeout);
+          conn.ev.removeAllListeners();
+          conn.ws.close();
+          resolve(true);
+        } else if (connection === 'close') {
+          clearTimeout(timeout);
+          conn.ev.removeAllListeners();
+          conn.ws.close();
+          resolve(false);
+        }
+      });
 
-  // Verifica que el WebSocket esté abierto o conectando y que isInit sea true
-  if (conn.ws && (conn.ws.readyState === OPEN || conn.ws.readyState === CONNECTING) && conn.isInit) {
-    return true;
-  }
+      // En caso de error inmediato
+      conn.ev.on('creds.update', () => saveCreds());
 
-  return false;
+    } catch (e) {
+      resolve(false);
+    }
+  });
 }
 
 let handler = async (m, { conn: parent }) => {
   const basePath = './Data/Sesiones/Subbots/';
-
   if (!fs.existsSync(basePath)) {
     return parent.reply(m.chat, '❌ No hay sesiones de sub bots guardadas.', m);
   }
 
-  let sesiones = fs.readdirSync(basePath).filter(name => {
-    return fs.existsSync(`${basePath}${name}/creds.json`);
-  });
+  let sesiones = fs.readdirSync(basePath).filter(name => fs.existsSync(`${basePath}${name}/creds.json`));
 
   if (!sesiones.length) {
     return parent.reply(m.chat, '❌ No hay sesiones de sub bots guardadas.', m);
   }
 
-  let output = '📡 *Sub Bots Activos*\n\n';
+  await parent.reply(m.chat, '⏳ Comprobando sesiones de sub bots, espera un momento...', m);
 
+  let output = '📡 *Estado de Sub Bots (Reconexión Fake)*\n\n';
   let countActive = 0;
   let countInactive = 0;
 
-  for (let user of sesiones) {
-    let jid = `${user}@s.whatsapp.net`;
-    let activo = global.conns.some(conn => isConnActive(conn, jid));
+  for (const user of sesiones) {
+    const sessionPath = `${basePath}${user}`;
+    const activo = await testConnection(sessionPath);
+
     if (activo) {
       countActive++;
       output += `✅ @${user}\n`;
