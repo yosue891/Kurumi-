@@ -8,7 +8,8 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
 
-const cleanFolder = async (folderPath) => {
+// Limpia archivos en carpeta, preservando los listados en keepFiles
+const cleanFolder = async (folderPath, keepFiles = ['creds.json']) => {
   if (!existsSync(folderPath)) return { deleted: 0, size: 0 };
 
   const files = await fs.readdir(folderPath);
@@ -16,7 +17,7 @@ const cleanFolder = async (folderPath) => {
   let totalSize = 0;
 
   for (const file of files) {
-    if (file !== 'creds.json') {
+    if (!keepFiles.includes(file)) {
       const filePath = path.join(folderPath, file);
       try {
         const stats = statSync(filePath);
@@ -29,7 +30,7 @@ const cleanFolder = async (folderPath) => {
     }
   }
 
-  return { deleted: filesDeleted, size: totalSize };
+  return { deleted: filesDeleted, size: totalSize, preserved: files.filter(f => keepFiles.includes(f)) };
 };
 
 const handler = async (m, { conn }) => {
@@ -48,29 +49,61 @@ const handler = async (m, { conn }) => {
   );
 
   try {
-    const folders = ['./Data/Sesiones/Principal/', './tmp'];
     let totalDeleted = 0;
     let totalSize = 0;
 
-    for (const folder of folders) {
-      const { deleted, size } = await cleanFolder(folder);
-      totalDeleted += deleted;
-      totalSize += size;
+    let report = '';
+
+    // Limpieza carpeta Principal
+    const principalPath = './Data/Sesiones/Principal/';
+    const { deleted: deletedPrincipal, size: sizePrincipal, preserved: preservedPrincipal } = await cleanFolder(principalPath, ['creds.json']);
+    totalDeleted += deletedPrincipal;
+    totalSize += sizePrincipal;
+    report += `📁 Carpeta Principal:\n  - Archivos eliminados: ${deletedPrincipal}\n  - Espacio liberado: ${formatSize(sizePrincipal)}\n  - Archivos preservados: ${preservedPrincipal.join(', ') || 'Ninguno'}\n\n`;
+
+    // Limpieza carpeta tmp
+    const tmpPath = './tmp';
+    const { deleted: deletedTmp, size: sizeTmp, preserved: preservedTmp } = await cleanFolder(tmpPath);
+    totalDeleted += deletedTmp;
+    totalSize += sizeTmp;
+    report += `📁 Carpeta tmp:\n  - Archivos eliminados: ${deletedTmp}\n  - Espacio liberado: ${formatSize(sizeTmp)}\n  - Archivos preservados: ${preservedTmp.join(', ') || 'Ninguno'}\n\n`;
+
+    // Limpieza Subbots
+    const subbotsPath = './Data/Sesiones/Subbots/';
+    if (existsSync(subbotsPath)) {
+      const subbotFolders = await fs.readdir(subbotsPath);
+      if (subbotFolders.length === 0) {
+        report += '📁 Carpeta Subbots está vacía.\n\n';
+      } else {
+        report += '📁 Carpeta Subbots:\n';
+        for (const folder of subbotFolders) {
+          const folderPath = path.join(subbotsPath, folder);
+          const stats = await fs.stat(folderPath);
+          if (stats.isDirectory()) {
+            const keepFiles = ['creds.json', 'session.json'];
+            const { deleted, size, preserved } = await cleanFolder(folderPath, keepFiles);
+            totalDeleted += deleted;
+            totalSize += size;
+            report += `  - Subbot "${folder}":\n    * Archivos eliminados: ${deleted}\n    * Espacio liberado: ${formatSize(size)}\n    * Archivos preservados: ${preserved.join(', ') || 'Ninguno'}\n`;
+          }
+        }
+        report += '\n';
+      }
+    } else {
+      report += '📁 Carpeta Subbots no existe.\n\n';
     }
 
     if (totalDeleted === 0) {
       await conn.sendMessage(
         m.chat,
-        { text: 'ℹ️ No se encontraron archivos para eliminar.\nSolo se conserva "creds.json".' },
+        { text: 'ℹ️ No se encontraron archivos para eliminar. Todos los archivos esenciales están preservados.' },
         { quoted: m }
       );
     } else {
       await conn.sendMessage(
         m.chat,
         {
-          text: `✅ Eliminados: ${totalDeleted} archivo(s).\n` +
-                `📦 Espacio liberado: ${formatSize(totalSize)}.\n` +
-                `⚠️ "creds.json" fue preservado.`,
+          text: `✅ Limpieza finalizada con éxito:\n\n${report}📊 Resumen total:\n  - Archivos eliminados: ${totalDeleted}\n  - Espacio liberado: ${formatSize(totalSize)}\n\n⚠️ Archivos esenciales para sesiones fueron preservados.`,
         },
         { quoted: m }
       );
@@ -79,14 +112,14 @@ const handler = async (m, { conn }) => {
     console.error('❌ Error en limpieza:', error);
     await conn.sendMessage(
       m.chat,
-      { text: '❌ Error inesperado al limpiar archivos. Consulte los logs.' },
+      { text: '❌ Error inesperado al limpiar archivos. Por favor, revisa los logs.' },
       { quoted: m }
     );
   }
 
   await conn.sendMessage(
     m.chat,
-    { text: '📌 Para actualizar la sesión, puede enviar comandos adicionales.' },
+    { text: '📌 Para refrescar la sesión, puedes enviar comandos adicionales o reiniciar el bot si es necesario.' },
     { quoted: m }
   );
 };
