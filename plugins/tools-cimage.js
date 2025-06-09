@@ -1,5 +1,5 @@
 let handler = async (m, { conn, args, command }) => {
-  if (!args[0]) throw `🌱 Ingresa un texto. Ejemplo: ${command} Sylphiette`
+  if (!args[0]) throw `🌱 Ingresa un texto. Ejemplo: ${command} Anya`
   let url = 'https://api.nekorinn.my.id/ai-img/capcut-genimage?text=' + encodeURIComponent(args.join(' '));
   await conn.sendMessage(m.chat, { image: { url } }, { quoted: m });
 };
