@@ -11,18 +11,18 @@ let handler = async (m, { conn }) => {
       label: 'Creador +50493732693',
       region: 'Honduras',
       email: 'minexdt@gmail.com',
-      website: 'pronti',
+      website: 'https://wirksi-box.vercel.app/',
       description: 'No hacer spam',
     },
     {
       number: '51921826291',
-      name: 'Maycol'
+      name: 'Maycol',
       org: 'Creador',
       label: 'Creador +51 921 826 291',
       region: 'Perú',
       email: 'karatekidamerica@gmail.com',
       website: 'Pronto',
-      description: 'Responsable',
+      description: 'Insano XD',
     },
   ];
 
