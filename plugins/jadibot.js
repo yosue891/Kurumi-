@@ -1,36 +1,27 @@
-const handler = async (m, { conn }) => {
-  if (!global.subbots || typeof global.subbots !== 'object') {
-    return m.reply('❌ No hay sub bots registrados.');
-  }
+import ws from 'ws'
 
-  const bots = Object.entries(global.subbots);
-  if (!bots.length) return m.reply('🤖 No hay sub bots activos en memoria.');
+async function handler(m, { conn: stars, usedPrefix }) {
+  let uniqueUsers = new Map()
 
-  let activos = [];
-  let inactivos = [];
-
-  for (const [id, sock] of bots) {
-    let isActivo = (typeof sock?.ev === 'object') && (typeof sock?.sendPresenceUpdate === 'function');
-    
-    if (isActivo) {
-      activos.push(`✅ ${id}`);
-    } else {
-      inactivos.push(`❌ ${id}`);
+  global.conns.forEach((conn) => {
+    if (conn.user && conn.ws.socket && conn.ws.socket.readyState !== ws.CLOSED) {
+      uniqueUsers.set(conn.user.jid, conn)
     }
-  }
+  })
 
-  const mensaje = `
-╭━━ ⭑ *Sub Bots Activos* ⭑ ━━╮
-${activos.join('\n') || '🤖 Ninguno'}
-╰━━━━━━━━━━━━━━━━━━━━━━╯
+  let users = [...uniqueUsers.values()]
 
-╭━━ ⭑ *Sub Bots Inactivos* ⭑ ━━╮
-${inactivos.join('\n') || '✅ Todos están activos'}
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-`.trim();
+  let message = users.map((v, index) => `╭─⬣「 ${packname} 」⬣\n│⁖ฺ۟̇࣪·֗٬̤⃟🤍 *${index + 1}.-* @${v.user.jid.replace(/[^0-9]/g, '')}\n│❀ *Link:* https://wa.me/${v.user.jid.replace(/[^0-9]/g, '')}\n│❀ *Nombre:* ${v.user.name || '𝚂𝚄𝙱-𝙱𝙾𝚃'}\n╰─⬣`).join('\n\n')
 
-  m.reply(mensaje);
-};
+  let replyMessage = message.length === 0 ? '' : message
+  global.totalUsers = users.length
+  let responseMessage = `╭━〔 𝗦𝗨𝗕-𝗕𝗢𝗧𝗦 𝗝𝗔𝗗𝗜𝗕𝗢𝗧  〕⬣\n┃ *𝚃𝙾𝚃𝙰𝙻 𝙳𝙴 𝚂𝚄𝙱𝙱𝙾𝚃𝚂* : ${totalUsers || '0'}\n╰━━━━━━━━━━━━⬣\n\n${replyMessage.trim()}`.trim()
 
-handler.command = /^bots$/i;
-export default handler;
+await stars.sendMessage(m.chat, { text: responseMessage, mentions: stars.parseMention(responseMessage) }, { quoted: fkontak })
+// await conn.reply(m.chat, responseMessage, m, rcanal)
+}
+
+handler.command = ['listjadibot', 'bots']
+handler.help = ['bots']
+handler.tags = ['serbot']
+export default handler
