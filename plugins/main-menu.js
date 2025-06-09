@@ -20,7 +20,7 @@ for (let cmd of Object.values(global.plugins)) {
   let cap = `⊂(◉‿◉)つ ¡Hola ${nombre}!\n> Aquí tienes el menu:\n\n`;
 
   for (let tag in groups) {
-    cap += `🌟 *${tag.toUpperCase()}*\n`;
+    cap += `✿ *${tag.toUpperCase()}*\n`;
     for (let cmds of groups[tag]) {
       for (let cmd of cmds) {
         cap += `• ${usedPrefix}${cmd}\n`;
