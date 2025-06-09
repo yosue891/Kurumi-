@@ -16,7 +16,7 @@ const handler = async (m, { isOwner, isAdmin, conn, text, participants, args, co
   texto += `👥 *Para ${totalMiembros} miembros*\n\n`;
   texto += `📝 *Mensaje:* ${mensajePersonalizado}\n\n`;
   texto += `──────────────────────────────\n`;
-  texto += `🔔 ${customEmoji} Invitación enviada por *${global.botname || 'el bot'}*\n\n`;
+  texto += `🔔 ${customEmoji} Invocacion enviada por *${wm}*\n\n`;
 
   for (const miembro of participants) {
     texto += `➥ ${customEmoji} @${miembro.id.split('@')[0]}\n`;
@@ -24,12 +24,12 @@ const handler = async (m, { isOwner, isAdmin, conn, text, participants, args, co
 
   texto += `──────────────────────────────\n`;
   texto += `🛡️ *Versión:* ${global.vs || '1.0.0'}\n`;
-  texto += `🤖 *¡Gracias por ser parte de esta comunidad!*`;
+  texto += `👤 \`Yuru Yuri en constante evolución.\``;
 
   await conn.sendMessage(m.chat, { text: texto, mentions: participants.map(a => a.id) }, { quoted: m });
 };
 
-handler.help = ['todos *<mensaje opcional>*'];
+handler.help = ['invocar *<mensaje opcional>*'];
 handler.tags = ['group'];
 handler.command = ['todos', 'invocar', 'tagall'];
 handler.admin = true;
