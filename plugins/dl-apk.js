@@ -29,7 +29,7 @@ let handler = async(m, { conn, text }) => {
 
         const { name, package: id, size, icon: image, dllink: downloadUrl, lastup } = apkInfo;
 
-        let caption = `    乂 \`ᗩᑭK - ᗪOᗯᑎᒪOᗩᗪᗴᖇ\`\n\n`
+        let caption = `    乂 *ᗩᑭK - ᗪOᗯᑎᒪOᗩᗪᗴᖇ*\n\n`
         caption += `≡ Nombre : ${name}\n`
         caption += `≡ ID : ${id}\n`
         caption += `≡ Tamaño : ${size}\n`
