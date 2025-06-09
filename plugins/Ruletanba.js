@@ -4,7 +4,7 @@ let handler = async (m, { conn, participants }) => {
     const gOwner = gAdmins.find(p => p.isAdmin)?.id;
     const gNoAdmins = participants.filter(p => p.id !== botId && p.id !== gOwner && !p.admin);
 
-    if (participants.length === gAdmins.length) { 
+    if (participants.length === gAdmins.length) {
         return m.reply('*[ ⚠️ ] Solo hay administradores en este grupo.*');
     }
 
@@ -12,18 +12,25 @@ let handler = async (m, { conn, participants }) => {
         return m.reply('*[ ⚠️ ] No hay usuarios disponibles para eliminar.*');
     }
 
-    // Enviar mensaje inicial
-    await conn.reply(m.chat, '*[ 🎰 ] La ruleta está comenzando a girar...*', m);
+    // Enviar primer mensaje que luego será editado
+    let msg = await conn.sendMessage(m.chat, {
+        text: '*[ 🎰 ] La ruleta está comenzando a girar...*',
+    }, { quoted: m });
 
-    // Cuenta regresiva (simulada)
-    const countdown = [
+    // Textos de la "ruleta"
+    const pasos = [
         '*[ 🎰 ] Girando la ruleta...*',
-        '*[ 🎰 ] Preparando el castigo...*',
-        '*[ 🎰 ] Cargando destino fatal...*'
+        '*[ 🎰 ] Pensando a quién banear...*',
+        '*[ 🎰 ] Ya casi...*'
     ];
-    for (let i = 0; i < countdown.length; i++) {
+
+    // Simular edición del mismo mensaje
+    for (let i = 0; i < pasos.length; i++) {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        await conn.reply(m.chat, countdown[i], m);
+        await conn.sendMessage(m.chat, {
+            text: pasos[i],
+            edit: msg.key // ← simula una edición
+        });
     }
 
     // Elegir usuario aleatorio
@@ -32,19 +39,20 @@ let handler = async (m, { conn, participants }) => {
 
     // Anunciar al perdedor
     await new Promise(resolve => setTimeout(resolve, 2000));
-    await conn.reply(m.chat, `*[ 🎰 ] La ruleta ha elegido a:*\n@${randomUser.id.split('@')[0]}\n\n😈 *¡Adiós!*`, m, {
+    await conn.sendMessage(m.chat, {
+        text: `*[ 🎰 ] La ruleta ha elegido a:*\n@${randomUser.id.split('@')[0]}\n\n😈 *¡Adiós!*`,
         mentions: [randomUser.id]
-    });
+    }, { quoted: m });
 
-    // Esperar antes de eliminar para dramatismo
+    // Pausa dramática
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Eliminar usuario
+    // Expulsar
     await conn.groupParticipantsUpdate(m.chat, [randomUser.id], 'remove');
 
-    // Mensaje de confirmación final
+    // Confirmación final
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await conn.reply(m.chat, `*Bueno, un pajero menos 👻*`, m);
+    await conn.reply(m.chat, '*Bueno, un pajero menos 👻*', m);
 
     m.react('✅');
 };
