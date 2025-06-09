@@ -28,7 +28,7 @@ global.APIKeys = {
 }
 
 // Sticker WM & prefijo
-global.prefijo = ""; // déjalo en blanco para multi - prefijo
+global.prefix = /^[°•π÷×¶∆£¢€¥®™+✓_=|~!?@#%^&.\/\\©^(){}\-;:¿¡`¤§><"']?/i;
 global.packname = "✿ ʏᴜʀᴜ ʏᴜʀɪ ✿";
 global.footer = "✿ 𝖬𝖺𝖽𝖾 𝖶𝗂𝗍𝗁 𝖶𝗂𝗋𝗄 𝖠𝗇𝖽 𝖬𝖺𝗒𝖼𝗈𝗅 ☄︎";
 global.wm = "☔︎︎ ᴛʜᴇ ʏᴜʀᴜ ʏᴜʀɪ | ᴠ1 ☁︎";
