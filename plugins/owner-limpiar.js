@@ -8,120 +8,99 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
 
-// Limpia archivos en carpeta, preservando los listados en keepFiles
-const cleanFolder = async (folderPath, keepFiles = ['creds.json']) => {
-  if (!existsSync(folderPath)) return { deleted: 0, size: 0 };
-
-  const files = await fs.readdir(folderPath);
-  let filesDeleted = 0;
-  let totalSize = 0;
-
-  for (const file of files) {
-    if (!keepFiles.includes(file)) {
-      const filePath = path.join(folderPath, file);
-      try {
-        const stats = statSync(filePath);
-        totalSize += stats.size;
-        await fs.unlink(filePath);
-        filesDeleted++;
-      } catch (error) {
-        console.error(`Error eliminando archivo ${filePath}:`, error);
-      }
-    }
-  }
-
-  return { deleted: filesDeleted, size: totalSize, preserved: files.filter(f => keepFiles.includes(f)) };
-};
-
 const handler = async (m, { conn }) => {
   if (global.conn.user.jid !== conn.user.jid) {
-    return conn.sendMessage(
-      m.chat,
-      { text: '⚠️ Este comando solo puede ejecutarlo el número principal del bot.' },
-      { quoted: m }
-    );
+    return conn.sendMessage(m.chat, {
+      text:
+        '🚫 *Acceso Denegado*\n\n' +
+        'Este comando está reservado exclusivamente para el número principal del bot.\n' +
+        'Por favor, utilícelo desde la cuenta autorizada.',
+    }, { quoted: m });
   }
 
-  await conn.sendMessage(
-    m.chat,
-    { text: '🧹 Iniciando limpieza de archivos de sesión y temporales...' },
-    { quoted: m }
-  );
+  await conn.sendMessage(m.chat, {
+    text:
+      '🔄 *Inicio del Proceso de Limpieza*\n\n' +
+      'Se procederá a eliminar archivos temporales y de sesión innecesarios, preservando únicamente los archivos esenciales para el funcionamiento.\n' +
+      'Por favor, espere...',
+  }, { quoted: m });
 
-  try {
-    let totalDeleted = 0;
-    let totalSize = 0;
+  const targets = [
+    { path: './tmp', exclude: [] },
+    { path: './Data/Sesiones/Principal', exclude: ['creds.json'] },
+    { path: './Data/Sesiones/Subbots', exclude: ['creds.json'] }
+  ];
 
-    let report = '';
+  let totalDeletedFiles = 0;
+  let totalFreedSpace = 0;
+  let detailedLog = '';
 
-    // Limpieza carpeta Principal
-    const principalPath = './Data/Sesiones/Principal/';
-    const { deleted: deletedPrincipal, size: sizePrincipal, preserved: preservedPrincipal } = await cleanFolder(principalPath, ['creds.json']);
-    totalDeleted += deletedPrincipal;
-    totalSize += sizePrincipal;
-    report += `📁 Carpeta Principal:\n  - Archivos eliminados: ${deletedPrincipal}\n  - Espacio liberado: ${formatSize(sizePrincipal)}\n  - Archivos preservados: ${preservedPrincipal.join(', ') || 'Ninguno'}\n\n`;
+  for (const { path: folderPath, exclude } of targets) {
+    if (!existsSync(folderPath)) {
+      detailedLog += `⚠️ Carpeta no encontrada o vacía: ${folderPath}\n\n`;
+      continue;
+    }
 
-    // Limpieza carpeta tmp
-    const tmpPath = './tmp';
-    const { deleted: deletedTmp, size: sizeTmp, preserved: preservedTmp } = await cleanFolder(tmpPath);
-    totalDeleted += deletedTmp;
-    totalSize += sizeTmp;
-    report += `📁 Carpeta tmp:\n  - Archivos eliminados: ${deletedTmp}\n  - Espacio liberado: ${formatSize(sizeTmp)}\n  - Archivos preservados: ${preservedTmp.join(', ') || 'Ninguno'}\n\n`;
+    try {
+      const files = await fs.readdir(folderPath);
+      let deletedFilesCount = 0;
+      let freedSpaceBytes = 0;
 
-    // Limpieza Subbots
-    const subbotsPath = './Data/Sesiones/Subbots/';
-    if (existsSync(subbotsPath)) {
-      const subbotFolders = await fs.readdir(subbotsPath);
-      if (subbotFolders.length === 0) {
-        report += '📁 Carpeta Subbots está vacía.\n\n';
-      } else {
-        report += '📁 Carpeta Subbots:\n';
-        for (const folder of subbotFolders) {
-          const folderPath = path.join(subbotsPath, folder);
-          const stats = await fs.stat(folderPath);
-          if (stats.isDirectory()) {
-            const keepFiles = ['creds.json', 'session.json'];
-            const { deleted, size, preserved } = await cleanFolder(folderPath, keepFiles);
-            totalDeleted += deleted;
-            totalSize += size;
-            report += `  - Subbot "${folder}":\n    * Archivos eliminados: ${deleted}\n    * Espacio liberado: ${formatSize(size)}\n    * Archivos preservados: ${preserved.join(', ') || 'Ninguno'}\n`;
+      for (const file of files) {
+        if (!exclude.includes(file)) {
+          const fullPath = path.join(folderPath, file);
+          const stats = statSync(fullPath);
+
+          if (stats.isFile()) {
+            await fs.unlink(fullPath);
+            deletedFilesCount++;
+            freedSpaceBytes += stats.size;
           }
         }
-        report += '\n';
       }
-    } else {
-      report += '📁 Carpeta Subbots no existe.\n\n';
-    }
 
-    if (totalDeleted === 0) {
-      await conn.sendMessage(
-        m.chat,
-        { text: 'ℹ️ No se encontraron archivos para eliminar. Todos los archivos esenciales están preservados.' },
-        { quoted: m }
-      );
-    } else {
-      await conn.sendMessage(
-        m.chat,
-        {
-          text: `✅ Limpieza finalizada con éxito:\n\n${report}📊 Resumen total:\n  - Archivos eliminados: ${totalDeleted}\n  - Espacio liberado: ${formatSize(totalSize)}\n\n⚠️ Archivos esenciales para sesiones fueron preservados.`,
-        },
-        { quoted: m }
-      );
+      totalDeletedFiles += deletedFilesCount;
+      totalFreedSpace += freedSpaceBytes;
+
+      if (deletedFilesCount > 0) {
+        detailedLog +=
+          `✅ Limpieza exitosa en: ${folderPath}\n` +
+          `• Archivos eliminados: ${deletedFilesCount}\n` +
+          `• Espacio liberado: ${formatSize(freedSpaceBytes)}\n\n`;
+      } else {
+        detailedLog += `ℹ️ No se eliminaron archivos en: ${folderPath}\n\n`;
+      }
+    } catch (error) {
+      detailedLog += `❌ Error procesando ${folderPath}: ${error.message}\n\n`;
     }
-  } catch (error) {
-    console.error('❌ Error en limpieza:', error);
-    await conn.sendMessage(
-      m.chat,
-      { text: '❌ Error inesperado al limpiar archivos. Por favor, revisa los logs.' },
-      { quoted: m }
-    );
   }
 
-  await conn.sendMessage(
-    m.chat,
-    { text: '📌 Para refrescar la sesión, puedes enviar comandos adicionales o reiniciar el bot si es necesario.' },
-    { quoted: m }
-  );
+  if (totalDeletedFiles === 0) {
+    await conn.sendMessage(m.chat, {
+      text:
+        '🔔 *Proceso de Limpieza Finalizado*\n\n' +
+        'No se encontraron archivos que requieran eliminación.\n' +
+        'Todos los archivos esenciales permanecen intactos para asegurar la estabilidad del bot.',
+    }, { quoted: m });
+  } else {
+    await conn.sendMessage(m.chat, {
+      text:
+        '✅ *Proceso de Limpieza Completado*\n\n' +
+        `• Total de archivos eliminados: ${totalDeletedFiles}\n` +
+        `• Espacio total liberado: ${formatSize(totalFreedSpace)}\n\n` +
+        'Detalle por carpeta:\n' +
+        '────────────────────────────\n' +
+        detailedLog +
+        '────────────────────────────\n' +
+        '📌 Se conservaron todos los archivos imprescindibles para el funcionamiento correcto del bot.',
+    }, { quoted: m });
+  }
+
+  await conn.sendMessage(m.chat, {
+    text:
+      '🔹 Para actualizar el estado, envíe cualquier comando.\n' +
+      '🔹 Bot optimizado y funcionando en óptimas condiciones.',
+  }, { quoted: m });
 };
 
 handler.help = ['limpiar'];
