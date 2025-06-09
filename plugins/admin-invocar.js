@@ -1,4 +1,6 @@
-const handler = async (m, { conn, isGroup, participants, usedPrefix, command }) => {
+const handler = async (m, { conn, participants }) => {
+  const isGroup = m.chat.endsWith('@g.us'); // Detecta si es grupo
+
   if (!isGroup) {
     return await conn.sendMessage(m.chat, { text: '❗ Este comando solo puede usarse dentro de un grupo.' }, { quoted: m });
   }
