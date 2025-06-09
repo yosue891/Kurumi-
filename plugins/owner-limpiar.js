@@ -120,6 +120,6 @@ const handler = async (m, { conn }) => {
 handler.help = ['limpiar', 'cleanallsession', 'dsowner'];
 handler.tags = ['owner'];
 handler.command = /^(limpiar|cleanallsession|del_reg_in_session_owner|dsowner|clearallsession)$/i;
-handler.rowner = true;
+handler.rowner = false
 
 export default handler;
