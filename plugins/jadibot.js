@@ -4,100 +4,72 @@ import path, { join } from 'path';
 import ws from 'ws';
 
 let handler = async (m, { conn: _envio, command, usedPrefix, args, text, isOwner }) => {
-    const isCommand1 = /^(deletesesion|deletebot|deletesession|deletesesaion)$/i.test(command);
-    const isCommand2 = /^(stop|pausarai|pausarbot)$/i.test(command);
-    const isCommand3 = /^(bots|sockets|socket)$/i.test(command);
+    const isCommand1 = /^(deletesesion|deletebot|deletesession|deletesesaion)$/i.test(command)  
+    const isCommand2 = /^(stop|pausarai|pausarbot)$/i.test(command)  
+    const isCommand3 = /^(bots|sockets|socket)$/i.test(command)   
 
     async function reportError(e) {
-        await m.reply(`❌ Ocurrió un error.`);
-        console.error(e);
+        await m.reply(`🚫 Ocurrió un error.`)
+        console.log(e)
     }
 
     switch (true) {
-        case isCommand1: {
-            let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender;
-            let uniqid = `${who.split`@`[0]}`;
-            const path = `./${jadi}/${uniqid}`;
+        case isCommand1:
+            let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
+            let uniqid = `${who.split`@`[0]}`
+            const path = `./${jadi}/${uniqid}`
 
             if (!await fs.existsSync(path)) {
-                await _envio.sendMessage(m.chat, {
-                    text: `⚠️ Usted no tiene una sesión activa. Cree una usando:\n${usedPrefix}jadibot\n\nO conecte una usando un ID:\n${usedPrefix}code (ID)`
-                }, { quoted: m });
-                return;
+                await conn.sendMessage(m.chat, { text: `⚠️ Usted no tiene una sesión, puede crear una usando:\n${usedPrefix + command}\n\nSi tiene una *(ID)* puede usar para saltarse el paso anterior usando:\n*${usedPrefix + command}* \`\`\`(ID)\`\`\`` }, { quoted: m })
+                return
             }
+            if (global.conn.user.jid !== conn.user.jid) return conn.sendMessage(m.chat, {text: `⚠️ Use este comando al *Bot* principal.\n\n*https://api.whatsapp.com/send/?phone=${global.conn.user.jid.split`@`[0]}&text=${usedPrefix + command}&type=phone_number&app_absent=0*`}, { quoted: m }) 
+            else {
+                await conn.sendMessage(m.chat, { text: `✅ Tu sesión como *Sub-Bot* se ha eliminado` }, { quoted: m })
+            }
+            try {
+                fs.rmdir(`./${jadi}/` + uniqid, { recursive: true, force: true })
+                await conn.sendMessage(m.chat, { text : `🗑️ Ha cerrado sesión y borrado todo rastro.` } , { quoted: m })
+            } catch (e) {
+                reportError(e)
+            }
+            break
 
-            if (global.conn.user.jid !== conn.user.jid) {
-                return _envio.sendMessage(m.chat, {
-                    text: `📌 Use este comando solo desde el *bot principal*:\n\nhttps://wa.me/${global.conn.user.jid.split`@`[0]}?text=${usedPrefix + command}`
-                }, { quoted: m });
-            } else {
-                await _envio.sendMessage(m.chat, {
-                    text: `✅ Tu sesión como *Sub-Bot* se ha eliminado.`
-                }, { quoted: m });
+        case isCommand2:
+            if (global.conn.user.jid == conn.user.jid) conn.reply(m.chat, `⚠️ Si no es *Sub-Bot* comuníquese al número principal del *Bot* para ser *Sub-Bot*.`, m)
+            else {
+                await conn.reply(m.chat, `💤 ${botname} desactivada.`, m)
+                conn.ws.close()  
+            }
+            break
 
+        case isCommand3:
+            const SUBBOTS_DIR = './Data/Sesiones/Subbots';
+            let subBots = [];
+            if (existsSync(SUBBOTS_DIR)) {
                 try {
-                    await fs.rm(path, { recursive: true, force: true });
-                    await _envio.sendMessage(m.chat, {
-                        text: `🗑️ Se ha borrado todo rastro de tu sesión.`
-                    }, { quoted: m });
+                    subBots = readdirSync(SUBBOTS_DIR).filter(name => {
+                        const dir = join(SUBBOTS_DIR, name);
+                        return statSync(dir).isDirectory();
+                    });
                 } catch (e) {
-                    reportError(e);
+                    console.error('Error leyendo subbots:', e);
                 }
             }
-            break;
-        }
-
-        case isCommand2: {
-            if (global.conn.user.jid === conn.user.jid) {
-                await _envio.sendMessage(m.chat, {
-                    text: `⛔ Este es el bot principal. Para convertirte en Sub-Bot usa el comando:\n${usedPrefix}jadibot`
-                }, { quoted: m });
-            } else {
-                await _envio.sendMessage(m.chat, {
-                    text: `🛑 ${botname} ha sido pausado correctamente.`
-                }, { quoted: m });
-                conn.ws.close();
-            }
-            break;
-        }
-
-        case isCommand3: {
-            const users = [
-                ...new Set(
-                    global.conns.filter((conn) =>
-                        conn.user && conn.ws && conn.ws.readyState === ws.OPEN
-                    )
-                )
-            ];
-
-            let list = users.map((conn, i) => `📲 *${i + 1}.* wa.me/${conn.user.jid.split`@`[0]}`).join('\n');
-
-            let replyText = users.length === 0
-                ? `❌ No hay Sub-Bots conectados.`
-                : `✅ *Sub-Bots conectados: ${users.length}*\n\n${list}`;
 
             const isMainBot = global.conn.user.jid === conn.user.jid;
-            const title = isMainBot ? `*「 SubBots Activos 」*` : `*🤖 Este es un Sub-Bot*\n`;
+            const subBotsList = subBots.map((s, i) => `╰➤ ${i + 1}. wa.me/${s}`).join('\n') || '_Ninguno conectado_';
+
+            const responseMessage = isMainBot
+                ? `*「✦」SubBots activos (${subBots.length})*\n\n${subBotsList}\n\n✧ Para ser SubBot usa *#code*`
+                : `🤖 *ESTE ES UN SUB-BOT*\n\n*SubBots detectados:* ${subBots.length}`;
 
             await _envio.sendMessage(m.chat, {
-                text: `${title}${replyText}`,
-                mentions: _envio.parseMention(replyText)
+                text: responseMessage,
+                mentions: _envio.parseMention(responseMessage)
             }, { quoted: m });
-            break;
-        }
+            break
     }
-};
-
-// Chequear sub-bots reconectados al iniciar (se ejecuta 1 sola vez cuando carga el archivo)
-if (!global._subBotCheck) {
-    global._subBotCheck = true;
-    if (!global.conns) global.conns = [];
-
-    global.conns = global.conns.filter(conn =>
-        conn.user && conn.ws && conn.ws.readyState === ws.OPEN
-    );
-
-    console.log(`✅ SubBots activos restaurados: ${global.conns.length}`);
 }
 
 handler.tags = ['serbot'];
