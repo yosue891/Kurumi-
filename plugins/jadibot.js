@@ -30,7 +30,7 @@ let handler = async (m, { conn: _conn, usedPrefix }) => {
   // Construir mensaje
   let texto = `📡 *Sub Bots Activos y Sesiones Guardadas*\n\n`;
   texto += listado.map(({ user, conectado }, i) => 
-    `*${i + 1}.* @${user} - ${conectado ? '🟢 Conectado' : '🔴 Desconectado'}`
+    `*${i + 1}.* @${user} - ${conectado ? '🟢' : '🔴'}`
   ).join('\n');
 
   await _conn.sendMessage(m.chat, { text: texto, mentions: listado.map(l => l.user + '@s.whatsapp.net') }, { quoted: m });
