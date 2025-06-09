@@ -190,8 +190,9 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
   serbot();
 };
 
-handler.help = ['cou'];
-handler.command = ['cou'];
+handler.help = ['code'];
+handler.command = ['cou', 'code'];
+handler.tags = ['code']
 handler.rowner = false;
 
 export default handler;
