@@ -15,14 +15,14 @@ const handler = async (m, { isOwner, isAdmin, conn, text, participants, args, co
   let texto = `📢 *NOTIFICACIÓN GENERAL* 📢\n\n`;
   texto += `👥 *Para ${totalMiembros} miembros*\n\n`;
   texto += `📝 *Mensaje:* ${mensajePersonalizado}\n\n`;
-  texto += `──────────────────────────────\n`;
+  texto += `─────────────────────\n`;
   texto += `🔔 ${customEmoji} Invocacion enviada por *${wm}*\n\n`;
 
   for (const miembro of participants) {
     texto += `➥ ${customEmoji} @${miembro.id.split('@')[0]}\n`;
   }
 
-  texto += `──────────────────────────────\n`;
+  texto += `─────────────────────\n`;
   texto += `🛡️ *Versión:* ${global.vs || '1.0.0'}\n`;
   texto += `👤 \`Yuru Yuri en constante evolución.\``;
 
