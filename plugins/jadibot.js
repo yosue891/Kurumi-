@@ -1,48 +1,33 @@
-import fs from 'fs';
+const handler = async (m, { conn, usedPrefix, command }) => {
+  try {
+    let active = []
+    let inactive = []
 
-let handler = async (m, { conn: parent }) => {
-  const basePath = './Data/Sesiones/Subbots/';
-  if (!fs.existsSync(basePath)) {
-    return parent.reply(m.chat, '❌ No hay sesiones de sub bots guardadas.', m);
-  }
-
-  let sesiones = fs.readdirSync(basePath).filter(name => fs.existsSync(`${basePath}${name}/creds.json`));
-
-  if (!sesiones.length) {
-    return parent.reply(m.chat, '❌ No hay sesiones de sub bots guardadas.', m);
-  }
-
-  let output = '📡 *Estado de Sub Bots*\n\n';
-  let countActive = 0;
-  let countInactive = 0;
-
-  for (const user of sesiones) {
-    try {
-      const credsPath = `${basePath}${user}/creds.json`;
-      const credsRaw = fs.readFileSync(credsPath, 'utf-8');
-      const creds = JSON.parse(credsRaw);
-
-      // Comprobación rápida para ver si tiene 'clientToken' y 'serverToken' (indicadores de sesión válida)
-      if (creds.clientToken && creds.serverToken) {
-        countActive++;
-        output += `✅ @${user}\n`;
+    // Recorremos los subbots registrados en global.subbots
+    for (const id in global.subbots) {
+      const subbot = global.subbots[id]
+      if (subbot?.conn?.ws?.readyState === 1) {
+        active.push(`✅ @${id.replace(/[^0-9]/g, '')}`)
       } else {
-        countInactive++;
-        output += `❌ @${user}\n`;
+        inactive.push(`❌ @${id.replace(/[^0-9]/g, '')}`)
       }
-    } catch (e) {
-      countInactive++;
-      output += `❌ @${user}\n`;
     }
+
+    let text = `🌸 *Sub Bots Registrados en ${global.botname || 'el Bot'}*\n\n`
+
+    text += `👑 *Activos (${active.length}):*\n${active.length ? active.join('\n') : '_Ninguno activo ahora_'}\n\n`
+    text += `🔕 *Inactivos (${inactive.length}):*\n${inactive.length ? inactive.join('\n') : '_Todos activos_'}\n`
+
+    await m.reply(text)
+  } catch (e) {
+    console.error(e)
+    await m.reply('⚠️ Ocurrió un error al listar los sub bots.')
   }
+}
 
-  output += `\nTotal: ${sesiones.length} | Activos (con sesión válida): ${countActive} | Desconectados: ${countInactive}`;
+handler.command = /^bots$/i
+handler.help = ['bots']
+handler.tags = ['info']
+handler.register = false
 
-  await parent.reply(m.chat, output.trim(), m, { mentions: sesiones.map(u => `${u}@s.whatsapp.net`) });
-};
-
-handler.help = ['bots'];
-handler.command = ['bots'];
-handler.rowner = false;
-
-export default handler;
+export default handler
