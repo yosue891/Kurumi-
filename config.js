@@ -10,7 +10,7 @@ import moment from 'moment-timezone';
 global.owner = [
   ['50493732693', "ɪ", true],
   ['51921826291'],
-  ["24580450156657"],
+  ["584242773183"],
 ] 
 
 global.mods = [] 
@@ -37,7 +37,7 @@ global.link = 'https://chat.whatsapp.com/JQMyVsc8U4iEHi7qLFgYNH';
 global.logo = 'https://files.cloudmini.net/download/xO27.jpeg'; 
 
 global.wait = "\`Cargando . . . Espera un momento.\`"
-global.rwait = '⌛'
+global.rwait = '🕒'
 global.dmoji = '🤭'
 global.done = '✅'
 global.error = '❌' 
