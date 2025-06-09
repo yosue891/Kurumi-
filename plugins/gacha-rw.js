@@ -61,17 +61,12 @@ let handler = async (m, { conn }) => {
             ? `Reclamado por @${randomCharacter.user.split('@')[0]}` 
             : 'Libre'
 
-        const message = `╭─────────────✦
-│  ✸ *RollWaifu*
-╰─────────────✦
-
-• ✎ *Nombre:* ${randomCharacter.name}
-• ⚥ *Género:* ${randomCharacter.gender}
-• ☁︎ *Valor:* ${randomCharacter.value}
-• ✦ *Estado:* ${statusMessage}
-• ❀ *Fuente:* ${randomCharacter.source}
-• ✿ *ID:* ${randomCharacter.id}
-`
+        const message = `❀ Nombre » *${randomCharacter.name}*
+⚥ Género » *${randomCharacter.gender}*
+✰ Valor » *${randomCharacter.value}*
+♡ Estado » ${statusMessage}
+❖ Fuente » *${randomCharacter.source}*
+✦ ID: *${randomCharacter.id}*`
 
         const mentions = userEntry ? [userEntry.userId] : []
         await conn.sendFile(m.chat, randomImage, `${randomCharacter.name}.jpg`, message, m, { mentions })
@@ -87,7 +82,7 @@ let handler = async (m, { conn }) => {
     }
 }
 
-handler.help = ['rw']
+handler.help = ['ver', 'rw', 'rollwaifu']
 handler.tags = ['gacha']
 handler.command = ['ver', 'rw', 'rollwaifu']
 handler.group = true
