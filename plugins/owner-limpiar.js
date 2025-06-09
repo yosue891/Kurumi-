@@ -106,6 +106,6 @@ const handler = async (m, { conn }) => {
 handler.help = ['limpiar'];
 handler.tags = ['owner'];
 handler.command = /^limpiar$/i;
-handler.rowner = true;
+handler.rowner = false;
 
 export default handler;
