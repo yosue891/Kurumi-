@@ -1,27 +1,72 @@
-import ws from 'ws'
+import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch, rmSync, promises as fsPromises } from "fs";
+const fs = { ...fsPromises, existsSync };
+import path, { join } from 'path' 
+import ws from 'ws';
 
-async function handler(m, { conn: stars, usedPrefix }) {
-  let uniqueUsers = new Map()
+let handler = async (m, { conn: _envio, command, usedPrefix, args, text, isOwner }) => {
+    const isCommand1 = /^(deletesesion|deletebot|deletesession|deletesesaion)$/i.test(command)  
+    const isCommand2 = /^(stop|pausarai|pausarbot)$/i.test(command)  
+    const isCommand3 = /^(bots|sockets|socket)$/i.test(command)   
 
-  global.conns.forEach((conn) => {
-    if (conn.user && conn.ws.socket && conn.ws.socket.readyState !== ws.CLOSED) {
-      uniqueUsers.set(conn.user.jid, conn)
+    async function reportError(e) {
+        await m.reply(`${msm} Ocurrió un error.`)
+        console.log(e)
     }
-  })
 
-  let users = [...uniqueUsers.values()]
+    switch (true) {
+        case isCommand1:
+            let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
+            let uniqid = `${who.split`@`[0]}`
+            const path = `./${jadi}/${uniqid}`
 
-  let message = users.map((v, index) => `╭─⬣「 ${packname} 」⬣\n│⁖ฺ۟̇࣪·֗٬̤⃟🤍 *${index + 1}.-* @${v.user.jid.replace(/[^0-9]/g, '')}\n│❀ *Link:* https://wa.me/${v.user.jid.replace(/[^0-9]/g, '')}\n│❀ *Nombre:* ${v.user.name || '𝚂𝚄𝙱-𝙱𝙾𝚃'}\n╰─⬣`).join('\n\n')
+            if (!await fs.existsSync(path)) {
+                await conn.sendMessage(m.chat, { text: `${emoji} Usted no tiene una sesión, puede crear una usando:\n${usedPrefix + command}\n\nSi tiene una *(ID)* puede usar para saltarse el paso anterior usando:\n*${usedPrefix + command}* \`\`\`(ID)\`\`\`` }, { quoted: m })
+                return
+            }
+            if (global.conn.user.jid !== conn.user.jid) return conn.sendMessage(m.chat, {text: `${emoji2} Use este comando al *Bot* principal.\n\n*https://api.whatsapp.com/send/?phone=${global.conn.user.jid.split`@`[0]}&text=${usedPrefix + command}&type=phone_number&app_absent=0*`}, { quoted: m }) 
+            else {
+                await conn.sendMessage(m.chat, { text: `${emoji} Tu sesión como *Sub-Bot* se ha eliminado` }, { quoted: m })
+            }
+            try {
+                fs.rmdir(`./${jadi}/` + uniqid, { recursive: true, force: true })
+                await conn.sendMessage(m.chat, { text : `${emoji3} Ha cerrado sesión y borrado todo rastro.` } , { quoted: m })
+            } catch (e) {
+                reportError(e)
+            }
+            break
 
-  let replyMessage = message.length === 0 ? '' : message
-  global.totalUsers = users.length
-  let responseMessage = `╭━〔 𝗦𝗨𝗕-𝗕𝗢𝗧𝗦 𝗝𝗔𝗗𝗜𝗕𝗢𝗧  〕⬣\n┃ *𝚃𝙾𝚃𝙰𝙻 𝙳𝙴 𝚂𝚄𝙱𝙱𝙾𝚃𝚂* : ${totalUsers || '0'}\n╰━━━━━━━━━━━━⬣\n\n${replyMessage.trim()}`.trim()
+        case isCommand2:
+            if (global.conn.user.jid == conn.user.jid) conn.reply(m.chat, `${emoji} Si no es *Sub-Bot* comuníquese al numero principal del *Bot* para ser *Sub-Bot*.`, m)
+            else {
+                await conn.reply(m.chat, `${emoji} ${botname} desactivada.`, m)
+                conn.ws.close()  
+            }
+            break
 
-await stars.sendMessage(m.chat, { text: responseMessage, mentions: stars.parseMention(responseMessage) }, { quoted: m })
-// await conn.reply(m.chat, responseMessage, m, rcanal)
+        case isCommand3:
+            const users = [...new Set([...global.conns.filter((conn) => conn.user && conn.ws.socket && conn.ws.socket.readyState !== ws.CLOSED).map((conn) => conn)])];
+
+            // Formateo del mensaje para mostrar solo el número de sub-bots y el nombre del bot principal
+            const mainBot = global.conn.user.jid.split`@`[0];  // El bot principal es el que tiene este jid
+            const isMainBot = global.conn.user.jid === conn.user.jid;
+
+            const replyMessage = users.length === 0
+                ? `No hay Sub-Bots disponibles por el momento.`
+                : `
+❀ para ser un subbot usa el comando *#code*\n\n✧ *Sub-Bots conectados: ${users.length}*
+❒ total de comandos 303`;
+
+            const responseMessage = isMainBot
+                ? `*「✦」subbots activos*\n${replyMessage}`
+                : `${emoji} *ESTE ES UN SUB-BOT*\n${replyMessage}`;
+
+            await _envio.sendMessage(m.chat, {text: responseMessage, mentions: _envio.parseMention(responseMessage)}, {quoted: m})
+            break
+    }
 }
 
-handler.command = ['listjadibot', 'bots']
-handler.help = ['bots']
 handler.tags = ['serbot']
+handler.help = ['sockets', 'deletesesion', 'pausarai']
+handler.command = ['deletesesion', 'deletebot', 'deletesession', 'deletesession', 'stop', 'pausarai', 'pausarbot', 'bots', 'sockets', 'socket']
+
 export default handler
