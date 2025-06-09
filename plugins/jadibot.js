@@ -1,79 +1,43 @@
-import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch, rmSync, promises as fsPromises } from "fs";
-const fs = { ...fsPromises, existsSync };
-import path, { join } from 'path';
-import ws from 'ws';
+import fs from 'fs';
+import path from 'path';
 
-let handler = async (m, { conn: _envio, command, usedPrefix, args, text, isOwner }) => {
-    const isCommand1 = /^(deletesesion|deletebot|deletesession|deletesesaion)$/i.test(command);  
-    const isCommand2 = /^(stop|pausarai|pausarbot)$/i.test(command);  
-    const isCommand3 = /^(bots|sockets|socket)$/i.test(command);   
+let handler = async (m, { conn: _conn, usedPrefix }) => {
+  // Ruta base donde están las sesiones
+  const basePath = './Data/Sesiones/Subbots/';
 
-    async function reportError(e) {
-        await m.reply(`${msm} Ocurrió un error.`);
-        console.log(e);
-    }
+  // Leer todas las carpetas dentro de Subbots (cada carpeta corresponde a un subbot)
+  let sesiones = [];
+  if (fs.existsSync(basePath)) {
+    sesiones = fs.readdirSync(basePath).filter(f => {
+      // Solo carpetas con creds.json dentro
+      return fs.existsSync(path.join(basePath, f, 'creds.json'));
+    });
+  }
 
-    switch (true) {
-        case isCommand1:
-            let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender;
-            let uniqid = `${who.split`@`[0]}`;
-            const path = `./${jadi}/${uniqid}`;
+  // Crear un listado con estado de conexión
+  let listado = sesiones.map((user) => {
+    // Buscar si el subbot está activo en global.conns por jid del usuario
+    // El jid del subbot se suele formar como `${user}@s.whatsapp.net`
+    const jid = `${user}@s.whatsapp.net`;
+    const estaConectado = global.conns.some(c => c.user?.id === jid);
+    return { user, conectado: estaConectado };
+  });
 
-            if (!await fs.existsSync(path)) {
-                await conn.sendMessage(m.chat, { text: `${emoji} Usted no tiene una sesión, puede crear una usando:\n${usedPrefix + command}\n\nSi tiene una *(ID)* puede usar para saltarse el paso anterior usando:\n*${usedPrefix + command}* \`\`\`(ID)\`\`\`` }, { quoted: m });
-                return;
-            }
-            if (global.conn.user.jid !== conn.user.jid) return conn.sendMessage(m.chat, {
-                text: `${emoji2} Use este comando al *Bot* principal.\n\n*https://api.whatsapp.com/send/?phone=${global.conn.user.jid.split`@`[0]}&text=${usedPrefix + command}&type=phone_number&app_absent=0*`
-            }, { quoted: m }); 
-            else {
-                await conn.sendMessage(m.chat, { text: `${emoji} Tu sesión como *Sub-Bot* se ha eliminado` }, { quoted: m });
-            }
-            try {
-                fs.rmdir(`./${jadi}/` + uniqid, { recursive: true, force: true });
-                await conn.sendMessage(m.chat, { text : `${emoji3} Ha cerrado sesión y borrado todo rastro.` }, { quoted: m });
-            } catch (e) {
-                reportError(e);
-            }
-            break;
+  if (listado.length === 0) {
+    return _conn.reply(m.chat, `❌ No hay sub bots activos o sesiones guardadas. Usa ${usedPrefix}cou para crear un sub bot.`, m);
+  }
 
-        case isCommand2:
-            if (global.conn.user.jid == conn.user.jid) {
-                conn.reply(m.chat, `${emoji} Si no es *Sub-Bot* comuníquese al número principal del *Bot* para ser *Sub-Bot*.`, m);
-            } else {
-                await conn.reply(m.chat, `${emoji} ${botname} desactivada.`, m);
-                conn.ws.close();
-            }
-            break;
+  // Construir mensaje
+  let texto = `📡 *Sub Bots Activos y Sesiones Guardadas*\n\n`;
+  texto += listado.map(({ user, conectado }, i) => 
+    `*${i + 1}.* @${user} - ${conectado ? '🟢 Conectado' : '🔴 Desconectado'}`
+  ).join('\n');
 
-        case isCommand3:
-            // Lista de conexiones activas (sub-bots) excluyendo el bot principal
-            const allConns = [...new Set(global.conns.filter((conn) => conn.user && conn.ws.socket && conn.ws.socket.readyState !== ws.CLOSED))];
-            const mainBotJid = global.conn.user.jid;
-            const subBots = allConns.filter(c => c.user.jid !== mainBotJid);
-
-            // Crear lista de sub bots con sus números
-            const subBotsList = subBots.map((u, i) => `✦ ${i + 1}. wa.me/${u.user.jid.split`@`[0]}`).join('\n');
-
-            const replyMessage = subBots.length === 0
-                ? `No hay Sub-Bots disponibles por el momento.`
-                : `
-🤍 Para ser un subbot usa el comando *#code*\n\n✧ *Sub-Bots conectados: ${subBots.length}*\n${subBotsList}\n\n${wm}`;
-
-            const responseMessage = (mainBotJid === conn.user.jid)
-                ? `*「✿」Subbots Activos Actualmente*\n${replyMessage}`
-                : `${emoji} *ESTE ES UN SUB-BOT*\n${replyMessage}`;
-
-            await _envio.sendMessage(m.chat, {
-                text: responseMessage,
-                mentions: _envio.parseMention(responseMessage)
-            }, { quoted: m });
-            break;
-    }
+  await _conn.sendMessage(m.chat, { text: texto, mentions: listado.map(l => l.user + '@s.whatsapp.net') }, { quoted: m });
 };
 
-handler.tags = ['serbot'];
-handler.help = ['bots', 'deletesesion', 'pausarai'];
-handler.command = ['deletesesion', 'deletebot', 'deletesession', 'deletesesaion', 'stop', 'pausarai', 'pausarbot', 'bots', 'sockets', 'socket'];
+handler.help = ['bots'];
+handler.command = ['bots'];
+handler.rowner = false;
 
 export default handler;
