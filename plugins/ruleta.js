@@ -52,7 +52,7 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
 
   }, 10000)
 }
-handler.tags = ['rpg']
+
 handler.help =['ruleta']
 handler.command = ['ruleta', 'roulette', 'rt']
 export default handler
