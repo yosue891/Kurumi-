@@ -8,7 +8,7 @@ import sharp from 'sharp'
 let handler = async (m, { conn, args, command, usedPrefix }) => {
   if (args[0] === '---i') {
     let helpText = `
-✦❂❂ \`Lista de Formas y Efectos Disponibles :\`
+✦ \`Lista de Formas y Efectos Disponibles :\`
 
 *Formas:*
 - -c : Crea un sticker circular
@@ -192,7 +192,7 @@ ${usedPrefix + command} -c -blur Texto | Autor
     if (stiker) {
       conn.sendFile(m.chat, stiker, 'sticker.webp', '', m)
     } else {
-      return conn.reply(m.chat, `🍄 Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"---i"*`, m)
+      return conn.reply(m.chat, `> ✐ Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"---i"*`, m)
     }
   }
 }
