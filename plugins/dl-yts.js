@@ -1,21 +1,27 @@
-import yts from 'yt-search'
-let handler = async (m, {conn, text }) => {
-  if (!text) throw `✳️ $Ingresa el título de un vídeo de YouTube.`
-  let results = await yts(text)
-let tes = results.videos
-let ms = tes.map(v => `
-° ${v.title}
+import yts from 'yt-search';
 
-≡ 🌳 \`Duración :\` ${v.timestamp}
-≡ 🌴 \`Subido :\` ${v.ago}
-≡ 🍁 \`Vistas :\` ${v.views.toLocaleString()}
-≡ 🌿 \`Link :\` ${v.url}
-`.trim()).join('\n________________________\n\n')
-let teks = `\`\`\`乂 YOUTUBE - SEARCH\`\`\`\n\n${ms}`
-conn.sendFile(m.chat, tes[0].image, 'yts.jpeg', teks, m)
-}
-handler.help = ['ytsearch'] 
-handler.tags = ['download']
-handler.command = ['ytsearch', 'yts'] 
+let handler = async (m, { conn, text }) => {
+  if (!text) throw `✳️ Ingresa el título de un video de YouTube.`;
 
-export default handler
+  let results = await yts(text);
+  let videos = results.videos.slice(0, 8); // Limita resultados para no saturar
+
+  let listado = videos.map((v, i) => `
+${i + 1}. 🎬 *${v.title}*
+╭───────────────
+│⏱️ *Duración:* ${v.timestamp}
+│📅 *Publicado:* ${v.ago}
+│👁️ *Vistas:* ${v.views.toLocaleString()}
+│🔗 *Enlace:* ${v.url}
+╰───────────────
+  `.trim()).join('\n');
+
+  let caption = `\`\`\`🔍 RESULTADOS DE BÚSQUEDA\`\`\`\n\n${listado}`;
+  await conn.sendFile(m.chat, videos[0].image, 'yts.jpeg', caption, m);
+};
+
+handler.help = ['ytsearch'];
+handler.tags = ['download'];
+handler.command = ['ytsearch', 'yts'];
+
+export default handler;
