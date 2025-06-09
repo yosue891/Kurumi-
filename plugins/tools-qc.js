@@ -20,7 +20,7 @@ const handler = async (m, { conn, args, usedPrefix, command }) => {
     const mentionRegex = new RegExp(`@${mentionedUser.split('@')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`, 'g')
     const mishi = text.replace(mentionRegex, '')
 
-    if (mishi.length > 30) return conn.reply(m.chat, `✧ El texto no puede tener más de 30 caracteres.`, m)
+    if (mishi.length > 45) return conn.reply(m.chat, `✧ El texto no puede tener más de 45 caracteres.`, m)
 
     const obj = {
         "type": "quote",
