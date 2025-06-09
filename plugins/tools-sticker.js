@@ -6,7 +6,7 @@ import { webp2png } from '../lib/webp2mp4.js'
 import sharp from 'sharp'
 
 let handler = async (m, { conn, args, command, usedPrefix }) => {
-  if (args[0] === '---i') {
+  if (args[0] === 'op') {
     let helpText = `
 ✦ \`Lista de Formas y Efectos Disponibles :\`
 
@@ -64,7 +64,7 @@ ${usedPrefix + command} -c -blur Texto | Autor
       let img = await q.download?.()
 
       if (!img) {
-        return conn.reply(m.chat, `> ✐ Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"---i"*`, m)
+        return conn.reply(m.chat, `> ✐ Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"op"*`, m)
       }
 
       let out
@@ -192,7 +192,7 @@ ${usedPrefix + command} -c -blur Texto | Autor
     if (stiker) {
       conn.sendFile(m.chat, stiker, 'sticker.webp', '', m)
     } else {
-      return conn.reply(m.chat, `> ✐ Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa *"---i"*`, m, rcanal)
+      return conn.reply(m.chat, `> ✐ Responde a una *imagen/video/gif* para convertirlo en sticker. Para saber la lista de efectos y formas usa s *op"`, m, rcanal)
     }
   }
 }
