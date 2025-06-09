@@ -1,11 +1,11 @@
 let handler = async (m, { conn, participants, groupMetadata, args }) => {
-const pp = 'https://telegra.ph/file/d33fa4945f9b21bcdd710.jpg';
+const pp = 'https://raw.githubusercontent.com/Ado926/WirksiBoxFiles/main/1749507001894-pxq76l-1749506980024-39d93e.jpg';
 const groupAdmins = participants.filter(p => p.admin)
 const listAdmin = groupAdmins.map((v, i) => ` - @${v.id.split('@')[0]}`).join('\n')
 const owner = groupMetadata.owner || groupAdmins.find(p => p.admin === 'superadmin')?.id || m.chat.split`-`[0] + '@s.whatsapp.net'
 
 let text = `
-≡ \`Admins del grupo :\` *${groupMetadata.subject}*
+≡ 👾 \`Admins del grupo :\` *${groupMetadata.subject}*
 
 ${listAdmin}
 
