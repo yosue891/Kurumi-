@@ -1,7 +1,7 @@
 const handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     if (!text) {
-      return conn.reply(m.chat, `🌿 Ejemplo de uso: ${usedPrefix + command} Black Clover`, m);
+      return conn.reply(m.chat, `💜 Ejemplo de uso: ${usedPrefix + command} Mini Dog`, m);
     }
     m.react('🕒');
     let old = new Date();
@@ -19,7 +19,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
       data: { url: video.no_wm },
       caption: index === 0 
         ? cap 
-        : `🌷 \`Title\` : ${video.title}\n🍟 \`Process\` : ${((new Date() - old) * 1)} ms`
+        : `👤 \`Titulo\` : ${video.title}\n🍟 \`Process\` : ${((new Date() - old) * 1)} ms`
     }));
     await conn.sendSylphy(m.chat, medias, { quoted: m });
     m.react('✅');
@@ -27,7 +27,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     return conn.reply(m.chat, `Ocurrió un problema al obtener los videos:\n\n` + e, m);
   }
 };
-handler.command = ["ttsesearch", "tiktoks", "tts", "ttrndm", "ttks"];
+handler.command = ["ttsesearch", "tiktoks", "tts", "ttrndm", "ttks", "tiktoksearch"];
 handler.help = ["ttsearch"];
 handler.tags = ["download"];
 export default handler;
