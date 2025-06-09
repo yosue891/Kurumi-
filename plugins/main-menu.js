@@ -58,7 +58,7 @@ for (let cmd of Object.values(global.plugins)) {
     document: localImageBuffer,
     mimetype: "image/jpeg",
     fileName,
-    caption: cap,
+    caption: cap
     jpegThumbnail: miniThumbnail,
     contextInfo: {
       externalAdReply: {
@@ -73,5 +73,5 @@ for (let cmd of Object.values(global.plugins)) {
   }, { quoted: m });
 };
 
-handler.command = ["menu", "menú"];
+handler.command = ["menu", "menú", "help", "ayuda"];
 export default handler;
