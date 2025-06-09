@@ -127,7 +127,7 @@ const handler = async (m, { conn, text, command }) => {
 };
 
 handler.help = ["play"];
-handler.tags = ["downloader"];
+handler.tags = ["download"];
 handler.command = ["play"];
 
 export default handler;
