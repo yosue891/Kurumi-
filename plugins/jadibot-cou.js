@@ -27,6 +27,11 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
     let authFolderB = m.sender.split('@')[0];
     const userFolderPath = `./Data/Sesiones/Subbots/${authFolderB}`;
 
+    // Verificar si ya existe una sesión activa
+    if (fs.existsSync(`${userFolderPath}/creds.json`) && !args[0]) {
+      return await parent.reply(m.chat, `⚠️ *Ya tienes una sesión activa.*\n\n🔁 Si deseas reiniciar tu subbot:\n1️⃣ Usa *${usedPrefix}delsesion*\n2️⃣ Luego ejecuta *${usedPrefix}cou* nuevamente.`, m);
+    }
+
     if (!fs.existsSync(userFolderPath)) {
       fs.mkdirSync(userFolderPath, { recursive: true });
     }
@@ -76,18 +81,16 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
         let codeBot = await conn.requestPairingCode(cleanedNumber);
         codeBot = codeBot?.match(/.{1,4}/g)?.join("-") || codeBot;
 
-        // 📲 INSTRUCCIONES
         const txt = `
-╭━━ 🎀 *Vincula tu número* 🎀 ━━╮
+╭━━ 🎀 *Vincula x Code* 🎀 ━━╮
 ┃ 📱 *Pasos:*
 ┃ 1. Abre WhatsApp
 ┃ 2. Toca los 3 puntos (⋮)
-┃ 3. Ve a *Dispositivos vinculados*
+┃ 3. Entra a *Dispositivos vinculados*
 ┃ 4. Toca *Vincular con número*
-┃ 5. Ingresa el siguiente código:
-╰━━━━━━━━━━━━━━━━━━━━━━╯`.trim();
+┃ 5. Ingresa este código:
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯`.trim();
 
-        // 🔑 CÓDIGO
         const txtCode = `🔐 *Tu código es:* \n\n🔹 *${codeBot}*`;
 
         await parent.reply(m.chat, txt, m);
@@ -187,7 +190,7 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
   serbot();
 };
 
-handler.help = ['code'];
+handler.help = ['cou'];
 handler.command = ['cou'];
 handler.rowner = false;
 
