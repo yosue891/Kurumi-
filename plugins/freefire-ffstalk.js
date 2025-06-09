@@ -1,4 +1,4 @@
-import axios from 'axios';
+/*import axios from 'axios';
 
 let handler = async (m, { conn, text }) => {
     if (!text) return conn.reply(m.chat, '*[ ℹ️ ] Ingresa el ID de un usuario de Free Fire que quieras stalkear.*\n\n*[ 💡 ] Ejemplo:* .ffstalk 2307852461\n\n> El comando está en desarrollo, puede haber errores.', m);
