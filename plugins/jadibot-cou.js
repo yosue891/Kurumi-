@@ -89,7 +89,7 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
 ┃ 3. Entra a *Dispositivos vinculados*
 ┃ 4. Toca *Vincular con número*
 ┃ 5. Ingresa este código:
-╰━━━━━━━━━━━━━━━━━━━━━━━━╯`.trim();
+╰━━━━━━━━━━━━━━╯`.trim();
 
         const txtCode = `🔐 *Tu código es:* \n\n🔹 *${codeBot}*`;
 
@@ -129,7 +129,7 @@ let handler = async (m, { conn: _conn, args, usedPrefix, command }) => {
 ┃ 📡 Conexión establecida correctamente
 ┃ 🧾 Usa *${usedPrefix}code* si se desconecta
 ┃ 👤 Usuario vinculado: @${authFolderB}
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`.trim(), m);
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯`.trim(), m);
 
         await sleep(3000);
 
