@@ -1,12 +1,17 @@
-const handler = async (m, { conn, participants }) => {
-  const isGroup = m.chat.endsWith('@g.us'); // Detecta si es grupo
+const wm = global.wm || 'TuBot';
+
+const handler = async (m, { conn }) => {
+  const isGroup = m.chat.endsWith('@g.us');
 
   if (!isGroup) {
     return await conn.sendMessage(m.chat, { text: '❗ Este comando solo puede usarse dentro de un grupo.' }, { quoted: m });
   }
 
   try {
+    const metadata = await conn.groupMetadata(m.chat);
+    const participants = metadata.participants;
     const mentions = participants.map(user => user.id);
+
     const messageText = `🔥 *${wm}* los invoca, presentense pinchis guapos 🔥\n\n`;
 
     await conn.sendMessage(m.chat, {
