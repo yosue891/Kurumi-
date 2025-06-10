@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
 import yts from "yt-search";
 import axios from "axios";
+import { createCanvas, loadImage } from "canvas";
+import { getAverageColor } from "fast-average-color-node";
 
 const formatAudio = ["mp3", "m4a", "webm", "acc", "flac", "opus", "ogg", "wav"];
 const formatVideo = ["360", "480", "720", "1080", "1440", "4k"];
@@ -23,7 +25,9 @@ const ddownr = {
       const { id, title, info } = response.data;
       const downloadUrl = await ddownr.cekProgress(id);
       return { title, downloadUrl, image: info.image };
-    } else throw new Error("⛔ No se pudo obtener detalles.");
+    } else {
+      throw new Error("⛔ No se pudo obtener detalles.");
+    }
   },
 
   cekProgress: async (id) => {
@@ -38,7 +42,7 @@ const ddownr = {
       if (res.data?.success && res.data.progress === 1000) {
         return res.data.download_url;
       }
-      await new Promise(resolve => setTimeout(resolve, 1000)); // espera mínima
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 };
@@ -51,19 +55,22 @@ const handler = async (m, { conn, text, command }) => {
   if (!res.all.length) return m.reply("⛔ No se encontraron resultados.");
 
   const video = res.all[0];
+  const total = Number(video.duration.seconds) || 60;
+  const current = Math.floor(Math.random() * (total - 30 + 1)) + 30;
+  const thumbnail = await create(video.thumbnail, video.title, video.author.name, current, total);
+
   const cap = `「❀」${video.title}
 
 > ✧ Canal : » ${video.author.name}
-> ✧ Duración : » ${video.duration.timestamp}
-> ✧ Vistas : » ${video.views.toLocaleString()}
-> ✧ URL : » ${video.url}`;
+✧ Duración : » ${video.duration.timestamp}
+✧ Vistas : » ${video.views.toLocaleString()}
+✧ URL : » ${video.url}`;
 
-  await conn.sendFile(m.chat, video.thumbnail, "thumb.jpg", cap, m);
+  await conn.sendFile(m.chat, thumbnail, "thumb.jpg", cap, m);
 
   if (["play", "yta", "ytmp3"].includes(command)) {
     try {
       const api = await ddownr.download(video.url, "mp3");
-
       await conn.sendMessage(m.chat, {
         audio: { url: api.downloadUrl },
         mimetype: "audio/mpeg",
@@ -104,7 +111,7 @@ const handler = async (m, { conn, text, command }) => {
 
           await m.react("✅");
           return;
-        } catch {}
+        } catch { }
       }
 
       return m.reply("⛔ No se pudo descargar desde ninguna fuente.");
@@ -119,3 +126,88 @@ handler.tags = ["download"];
 handler.command = ["play"];
 
 export default handler;
+
+function formatTime(sec) {
+  const min = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return `${min}:${s}`;
+}
+
+function wrapText(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+
+  for (const word of words) {
+    const testLine = line + word + ' ';
+    const { width } = ctx.measureText(testLine);
+    if (width > maxWidth && line) {
+      lines.push(line.trim());
+      line = word + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (line) lines.push(line.trim());
+  return lines;
+}
+
+async function create(imageUrl, title, author, currentSec, totalSec) {
+  const canvas = createCanvas(720, 900);
+  const ctx = canvas.getContext('2d');
+
+  const res = await fetch(imageUrl);
+  const buffer = await res.buffer();
+  const img = await loadImage(buffer);
+
+  const { value: [r, g, b] } = await getAverageColor(buffer);
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, `rgb(${r + 20}, ${g + 20}, ${b + 20})`);
+  gradient.addColorStop(1, `rgb(${r}, ${g}, ${b})`);
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const side = Math.min(img.width, img.height);
+  const sx = (img.width - side) / 2;
+  const sy = (img.height - side) / 2;
+  ctx.drawImage(img, sx, sy, side, side, 60, 60, 600, 600);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 38px sans-serif';
+  ctx.textAlign = 'center';
+
+  const maxWidth = 620;
+  const lines = wrapText(ctx, title, maxWidth);
+  const startY = 720;
+  const lineHeight = 42;
+
+  lines.forEach((line, i) => {
+    ctx.fillText(line, canvas.width / 2, startY + i * lineHeight);
+  });
+
+  ctx.font = '28px sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillText(author, canvas.width / 2, startY + lines.length * lineHeight + 5);
+
+  const barX = 80;
+  const barY = 830 + (lines.length - 1) * 20;
+  const barW = 560;
+  const barH = 6;
+  const progress = Math.min(currentSec / totalSec, 1);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillRect(barX, barY, barW, barH);
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(barX, barY, barW * progress, barH);
+
+  ctx.font = '20px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(formatTime(currentSec), barX, barY + 25);
+  ctx.textAlign = 'right';
+  ctx.fillText(formatTime(totalSec), barX + barW, barY + 25);
+
+  return canvas.toBuffer();
+}
