@@ -163,48 +163,74 @@ async function create(imageUrl, title, author, currentSec, totalSec) {
 
   const { value: [r, g, b] } = await getAverageColor(buffer);
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, `rgb(${r + 20}, ${g + 20}, ${b + 20})`);
+  gradient.addColorStop(0, `rgb(${r + 30}, ${g + 30}, ${b + 30})`);
   gradient.addColorStop(1, `rgb(${r}, ${g}, ${b})`);
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const side = Math.min(img.width, img.height);
-  const sx = (img.width - side) / 2;
-  const sy = (img.height - side) / 2;
-  ctx.drawImage(img, sx, sy, side, side, 60, 60, 600, 600);
+  // Imagen con borde redondeado
+  const radius = 30;
+  const x = 60, y = 60, w = 600, h = 600;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(img, 0, 0, img.width, img.height, x, y, w, h);
+  ctx.restore();
 
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 38px sans-serif';
+  // Texto del título
+  ctx.font = 'bold 38px "Arial Black", sans-serif';
   ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = '#fff';
 
   const maxWidth = 620;
   const lines = wrapText(ctx, title, maxWidth);
   const startY = 720;
   const lineHeight = 42;
-
   lines.forEach((line, i) => {
     ctx.fillText(line, canvas.width / 2, startY + i * lineHeight);
   });
 
+  // Autor
+  ctx.shadowBlur = 4;
   ctx.font = '28px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.fillText(author, canvas.width / 2, startY + lines.length * lineHeight + 5);
 
+  // Barra de progreso
   const barX = 80;
   const barY = 830 + (lines.length - 1) * 20;
   const barW = 560;
-  const barH = 6;
+  const barH = 8;
   const progress = Math.min(currentSec / totalSec, 1);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.fillRect(barX, barY, barW, barH);
 
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = '#ff5e5e';
   ctx.fillRect(barX, barY, barW * progress, barH);
 
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(barX, barY, barW, barH);
+
+  // Tiempos
   ctx.font = '20px sans-serif';
   ctx.textAlign = 'left';
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
   ctx.fillText(formatTime(currentSec), barX, barY + 25);
   ctx.textAlign = 'right';
   ctx.fillText(formatTime(totalSec), barX + barW, barY + 25);
