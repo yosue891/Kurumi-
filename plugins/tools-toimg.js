@@ -1,23 +1,28 @@
-import { webp2png } from '../lib/webp2mp4.js'
-import { fromBuffer } from 'file-type'
+import sharp from 'sharp'
 
 let handler = async (m, { conn }) => {
-  const notStickerMessage = `> 🍟 Debes citar un *sticker fijo* para convertir a imagen.`
   const q = m.quoted || m
   const mime = q.mediaType || ''
-  
-  if (!/sticker/.test(mime)) return m.reply(notStickerMessage)
-  
-  const media = await q.download()
-  const fileType = await fromBuffer(media)
-  
-  if (!fileType || fileType.ext !== 'webp') return m.reply(`❌ Solo se puede convertir stickers fijos (no animados).`)
-  
-  let out = await webp2png(media).catch(_ => null)
-  
-  if (!out) return m.reply(`❌ Error al convertir el sticker.`)
-  
-  await conn.sendFile(m.chat, out, 'imagen.png', null, m)
+
+  if (!/sticker/.test(mime)) {
+    return m.reply('🍟 *Debes responder a un sticker fijo para convertirlo a imagen (no animado).*')
+  }
+
+  let media
+  try {
+    media = await q.download()
+  } catch {
+    return m.reply('❌ *No se pudo descargar el sticker.*')
+  }
+
+  let bufferImg
+  try {
+    bufferImg = await sharp(media).png().toBuffer()
+  } catch (e) {
+    return m.reply('⚠️ *No se pudo convertir. Asegúrate de que sea un sticker fijo (no animado).*')
+  }
+
+  await conn.sendFile(m.chat, bufferImg, 'sticker.png', null, m)
 }
 
 handler.help = ['toimg (reply)']
