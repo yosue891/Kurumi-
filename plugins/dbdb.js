@@ -57,17 +57,7 @@ const getDownloadUrl = async (videoUrl) => {
 };
 
 // Function to send the audio message
-const sendAudioNormal = async (conn, chat, audioUrl, videoTitle) => {
-  let thumbnailBuffer = null;
-  try {
-    // Attempt to fetch the default thumbnail
-    const response = await axios.get('https://files.catbox.moe/skhywv.jpg', { responseType: 'arraybuffer' });
-    thumbnailBuffer = Buffer.from(response.data, 'binary');
-  } catch (error) {
-    console.error('Error fetching default audio thumbnail:', error.message);
-    // Continue without thumbnail if fetching fails
-  }
-
+const sendAudioNormal = async (conn, chat, audioUrl) => { // Removed videoTitle and thumbnailBuffer as they are not needed for contextInfo
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       await conn.sendMessage(
@@ -75,17 +65,6 @@ const sendAudioNormal = async (conn, chat, audioUrl, videoTitle) => {
         {
           audio: { url: audioUrl },
           mimetype: 'audio/mpeg',
-          contextInfo: {
-            externalAdReply: {
-              title: videoTitle,
-              body: 'MediaHub Music', // Corrected typo
-              previewType: 'PHOTO',
-              thumbnail: thumbnailBuffer || null, // Use null if buffer is not available
-              mediaType: 1,
-              renderLargerThumbnail: false,
-              showAdAttribution: true,
-            }
-          }
         },
         { quoted: null }
       );
@@ -126,13 +105,13 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
         text: `Uso: ${usedPrefix + command} <nombre de la canción>\n> Ejemplo: ${usedPrefix + command} Mi Vida Eres Tu `,
         contextInfo: {
           externalAdReply: {
-            title: 'MediaHub Music', // Corrected typo
+            title: 'Bot Music', // Changed from MediaHub Music
             previewType: 'PHOTO',
             thumbnail: helpThumbnailBuffer || null,
             mediaType: 1,
             renderLargerThumbnail: false,
             showAdAttribution: true,
-            sourceUrl: 'https://mediahub-info.vercel.app'
+            sourceUrl: 'https://example.com' // Changed from MediaHub URL
           }
         }
       },
@@ -149,7 +128,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   const userNumber = m.sender.split('@')[0];
   const reactionMessage = await conn.reply(
     m.chat,
-    `${greeting} @${userNumber},\nEstoy buscando la música solicitada.\n\n> ¡Gracias por usar MediaHub📱!`,
+    `${greeting} @${userNumber},\nEstoy buscando la música solicitada.\n\n> ¡Gracias por usar este servicio!,`, // Removed MediaHub branding
     m,
     { mentions: [m.sender] }
   );
@@ -178,14 +157,11 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     }
 
     // Prepare and send video information message
-    const description = `╭─⬣「 *MediaHub* 」⬣
-│  ≡◦ *🎵 Título* ∙ ${title}
-│  ≡◦ *⏱ Duración* ∙ ${duration || 'Desconocida'}
-│  ≡◦ *👀 Vistas* ∙ ${views.toLocaleString()}
-│  ≡◦ *📅 Publicado* ∙ ${ago || 'Desconocido'}
-│  ≡◦ *🔗 URL* ∙ ${videoUrl}
-╰─⬣
-> © Prohibido la copia, Código Oficial de MediaHub™`;
+    const description = ` ${title}
+⏱  *Duración:* ${duration || 'Desconocida'}
+👀  *Vistas:* ${views.toLocaleString()}
+📅  *Publicado:* ${ago || 'Desconocido'}
+🔗  *URL:* ${videoUrl}`;
 
     await conn.sendMessage(
       m.chat,
@@ -194,7 +170,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
         contextInfo: {
           externalAdReply: {
             title: title,
-            body: 'MediaHub Music', // Corrected typo
+            body: wm, // Changed from MediaHub Music
             previewType: 'PHOTO',
             thumbnail: videoThumbnailBuffer || null,
             mediaType: 1,
@@ -215,7 +191,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
     // Send the audio file
     await conn.sendMessage(m.chat, { react: { text: '🟢', key: reactionMessage.key } }, { quoted: m });
-    const success = await sendAudioNormal(conn, m.chat, downloadData.url, downloadData.title || title);
+    const success = await sendAudioNormal(conn, m.chat, downloadData.url); // Removed downloadData.title
     if (!success) {
       throw new Error('No se pudo enviar el audio después de varios intentos.');
     }
