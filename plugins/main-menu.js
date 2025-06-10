@@ -1,83 +1,120 @@
-import fetch from 'node-fetch';
-import sharp from 'sharp';
-import { promises as fs } from 'fs';
+let handler = async (m, { conn, args }) => {
+  let userId = m.mentionedJid?.[0] || m.sender
+  let user = global.db.data.users[userId]
+  let name = conn.getName(userId)
+  let _uptime = process.uptime() * 1000
+  let uptime = clockString(_uptime)
+  let totalreg = Object.keys(global.db.data.users).length
 
-let handler = async (m, { conn, usedPrefix, command }) => {
-  let nombre = await conn.getName(m.sender);
-  let fileName = `✦ ʏᴜʀᴜ ʏᴜʀɪ ✧`;
+  // Saludo decorado
+  let hour = new Intl.DateTimeFormat('es-PE', {
+  hour: 'numeric',
+  hour12: false,
+  timeZone: 'America/Lima'
+}).format(new Date())
+  
+  let saludo = hour < 6 ? "🌌 Buenas madrugadas, espíritu insomne..." :
+               hour < 12 ? "🌅 Buenos días, alma luminosa~" :
+               hour < 18 ? "🌄 Buenas tardes, viajero astral~" :
+               "🌃 Buenas noches, sombra errante~"
 
-  // Detectar si es el bot principal o un sub bot
-  let mainBotNumber = '50493059810@s.whatsapp.net'; // <-- Número del bot principal (ajusta según sea necesario)
-  let esPrincipal = conn.user.jid === mainBotNumber;
-  let estadoBot = esPrincipal ? '\`✧ Bot:\` *Principal*' : '\`✧ Bot:\` *Sub Bot*';
-
-  // Obtener el menú agrupado por tags
-  const groups = {};
-  for (let cmd of Object.values(global.plugins)) {
-    if (!cmd.help || !cmd.tags) continue;
-    for (let tag of cmd.tags) {
-      if (!groups[tag]) groups[tag] = [];
-      groups[tag].push(cmd.help.flat());
+  // Agrupar comandos por categorías
+  let categories = {}
+  for (let plugin of Object.values(global.plugins)) {
+    if (!plugin.help || !plugin.tags) continue
+    for (let tag of plugin.tags) {
+      if (!categories[tag]) categories[tag] = []
+      categories[tag].push(...plugin.help.map(cmd => `#${cmd}`))
     }
   }
 
-  // Formar el texto del menú
-  let cap = `${estadoBot}\n\n⊂(◉‿◉)つ ¡Hola ${nombre}!\n> Aquí tienes el menú:\n\n`;
+  // Emojis random por categoría
+  let decoEmojis = ['✨', '🌸', '👻', '⭐', '🔮', '💫', '☁️', '🦋', '🪄']
+  let emojiRandom = () => decoEmojis[Math.floor(Math.random() * decoEmojis.length)]
 
-  for (let tag in groups) {
-    cap += `✿ *${tag.toUpperCase()}*\n`;
-    for (let cmds of groups[tag]) {
-      for (let cmd of cmds) {
-        cap += `• ${usedPrefix}${cmd}\n`;
+  //🌌 MENU DE KURIMI 🌌
+  let menuText = `
+╭───❖ 𝓗𝓪𝓷𝓪𝓴𝓸 𝓑𝓸𝓽 ❖───╮
+
+ ｡ﾟ☆: *.${name}.* :☆ﾟ｡  
+> *_${saludo}_*
+
+╰─────❖ 𝓜𝓮𝓷𝓾 ❖─────╯
+
+✦ 𝙸𝙽𝙵𝙾 𝙳𝙴 kurumi✦
+
+💻 Sistema: Multi-Device
+👤 Usado por: @${userId.split('@')[0]}
+⏰ Tiempo activo: ${uptime}
+👥 Usuarios: ${totalreg} usuarios 
+⌚ Hora: ${hour}
+
+> *_esta bot está en pleno desarrollo pronto tendrá más cositas_*
+
+≪──── ⋆𓆩✧𓆪⋆ ────≫
+`.trim()
+
+  for (let [tag, cmds] of Object.entries(categories)) {
+    let tagName = tag.toUpperCase().replace(/_/g, ' ')
+    let deco = emojiRandom()
+    menuText += `
+
+╭─━━━ ${deco} ${tagName} ${deco} ━━━╮
+${cmds.map(cmd => `│ ➯ ${cmd}`).join('\n')}
+╰─━━━━━━━━━━━━━━━━╯`
+  }
+
+  // Mensaje previo cute
+  await conn.reply(m.chat, '⌜ ⊹ Espera un momento, estamos enviando su menu...😸 ⊹ ⌟', m, {
+    contextInfo: {
+      externalAdReply: {
+        title: botname,
+        body: "🌌No importa lo que pase debes vivir vive y se feliz🌌",
+        thumbnailUrl: 'https://files.catbox.moe/hha29x.jpg',
+        sourceUrl: redes,
+        mediaType: 1,
+        showAdAttribution: true,
+        renderLargerThumbnail: true,
       }
     }
-    cap += `\n`;
-  }
+  })
 
-  // Imagen del documento
-  let localImageBuffer = await fs.readFile("./src/menu.jpg");
-
-  // Miniatura del documento
-  let miniThumbnail = await sharp(localImageBuffer)
-    .resize(200, 200)
-    .jpeg({ quality: 70 })
-    .toBuffer();
-
-  // Imagen para el adReply
-  let adreplyImage = miniThumbnail;
-
-  try {
-    const apiURL = `https://nightapi.is-a.dev/api/mayeditor?url=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAoH2L-_2H07icZqJWQ-1wJZRYXTAmlDJlgbcrYaoIswQsuR6M61b30JU&s=10&texto=¡Hola%20${encodeURIComponent(nombre)}!&textodireccion=Centro&fontsize=70`;
-    const res = await fetch(apiURL);
-    const json = await res.json();
-    if (json.success) {
-      const imgRes = await fetch(json.edited_url);
-      adreplyImage = await imgRes.buffer();
-    }
-  } catch (e) {
-    console.warn("⚠️ Error al obtener miniatura de la API, usando fallback");
-  }
-
-  // Enviar el documento como menú
+  // Enviar menú con video estilo gif
   await conn.sendMessage(m.chat, {
-    document: localImageBuffer,
-    mimetype: "image/jpeg",
-    fileName,
-    caption: cap,
-    jpegThumbnail: miniThumbnail,
+    video: { url:'https://raw.githubusercontent.com/IrokzDal/uploads/main/1749581606606.mp4', gifPlayback: true },
+    caption: menuText,
+    gifPlayback: true,
     contextInfo: {
-      ...global.rcanal.contextInfo,
-      externalAdReply: {
-        title: `Menu solicitado por ${nombre}`,
-        body: `🤍 Comandos actualizados 🛠️`,
-        thumbnail: adreplyImage,
-        mediaType: 1,
-        renderLargerThumbnail: true,
-        sourceUrl: "https://github.com", // tu link aquí
+      mentionedJid: [m.sender, userId],
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: '120363372883715167@newsletter',
+        newsletterName: 'yosue y maycol y wirk <3',
+        serverMessageId: -1,
       },
-    },
-  }, { quoted: m });
-};
+      forwardingScore: 999,
+      externalAdReply: {
+        title: botname,
+        body: "❤️🌌",
+        thumbnailUrl: banner,
+        sourceUrl: redes,
+        mediaType: 1,
+        showAdAttribution: true,
+        renderLargerThumbnail: true,
+      },
+    }
+  }, { quoted: m })
+}
 
-handler.command = ["menu", "menú", "help", "ayuda"];
-export default handler;
+handler.help = ['menu']
+handler.tags = ['main']
+handler.command = ['menu', 'menú', 'help', 'ayuda']
+
+export default handler
+
+function clockString(ms) {
+  let h = Math.floor(ms / 3600000)
+  let m = Math.floor(ms / 60000) % 60
+  let s = Math.floor(ms / 1000) % 60
+  return `${h}h ${m}m ${s}s`
+}
