@@ -124,7 +124,7 @@ const handler = async (m, { conn, text, command }) => {
 
 handler.help = ["play"];
 handler.tags = ["download"];
-handler.command = ["play"];
+handler.command = ["play", "yta", "ytmp3", "play2", "ytv", "ytmp4"];
 
 export default handler;
 
@@ -158,47 +158,68 @@ async function create(imageUrl, { title, author, duration, views, current, total
   const canvas = createCanvas(1280, 720);
   const ctx = canvas.getContext('2d');
 
+  // Cargar imagen de miniatura
   const res = await fetch(imageUrl);
   const buffer = await res.buffer();
   const img = await loadImage(buffer);
 
+  // Obtener color promedio para fondo degradado suave
   const { value: [r, g, b] } = await getAverageColor(buffer);
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.drawImage(img, 0, 0, 1280, 720);
+  // Dibujar miniatura escalada para llenar
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-  // Fondo de datos
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(0, 500, 1280, 220);
+  // Fondo semitransparente para datos
+  const overlayHeight = 220;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+  ctx.fillRect(0, canvas.height - overlayHeight, canvas.width, overlayHeight);
 
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 38px sans-serif';
+  // Texto título con ajuste y espaciado
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 38px Sans-serif';
   ctx.textAlign = 'left';
-  const lines = wrapText(ctx, title, 1180);
-  lines.forEach((line, i) => ctx.fillText(line, 50, 550 + i * 42));
+  ctx.textBaseline = 'top';
 
-  ctx.font = '28px sans-serif';
-  ctx.fillText(`Canal: ${author}`, 50, 610 + lines.length * 10);
-  ctx.fillText(`Duración: ${duration}`, 50, 650 + lines.length * 10);
-  ctx.fillText(`Vistas: ${views}`, 50, 690 + lines.length * 10);
+  const paddingX = 50;
+  const paddingY = canvas.height - overlayHeight + 30;
+  const maxTextWidth = canvas.width - 2 * paddingX;
 
-  const barX = 50;
-  const barY = 705;
-  const barW = 1180;
-  const barH = 8;
+  const lines = wrapText(ctx, title, maxTextWidth);
+  lines.slice(0, 3).forEach((line, i) => {
+    ctx.fillText(line, paddingX, paddingY + i * 42);
+  });
+
+  // Datos adicionales
+  ctx.font = '28px Sans-serif';
+  const infoYStart = paddingY + lines.length * 42 + 15;
+  ctx.fillText(`Canal: ${author}`, paddingX, infoYStart);
+  ctx.fillText(`Duración: ${duration}`, paddingX, infoYStart + 38);
+  ctx.fillText(`Vistas: ${views}`, paddingX, infoYStart + 76);
+
+  // Barra de progreso de duración
+  const barX = paddingX;
+  const barY = canvas.height - 30;
+  const barWidth = canvas.width - 2 * paddingX;
+  const barHeight = 10;
   const progress = Math.min(current / total, 1);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.fillRect(barX, barY, barW, barH);
+  // Fondo barra
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.fillRect(barX, barY, barWidth, barHeight);
 
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(barX, barY, barW * progress, barH);
+  // Progreso
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 
-  ctx.font = '20px sans-serif';
-  ctx.fillText(formatTime(current), barX, barY + 25);
+  // Texto tiempos
+  ctx.font = '20px Sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(formatTime(current), barX, barY - 10);
   ctx.textAlign = 'right';
-  ctx.fillText(formatTime(total), barX + barW, barY + 25);
+  ctx.fillText(formatTime(total), barX + barWidth, barY - 10);
 
   return canvas.toBuffer();
 }
