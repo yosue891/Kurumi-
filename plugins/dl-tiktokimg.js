@@ -93,6 +93,6 @@ let handler = async (m, { conn, text, args, command, usedPrefix }) => {
 handler.help = ['tiktokimg <url>']
 handler.tags = ['descargas']
 handler.command = ['tiktokimg', 'ttimg']
-handler.group = true
+handler.group = false
 
 export default handler
