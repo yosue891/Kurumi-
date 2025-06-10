@@ -1,6 +1,7 @@
 
 import { createCanvas, loadImage } from 'canvas';
 import { getAverageColor } from 'fast-average-color-node';
+import yts from 'ytsearch';
 
 const limit = 10;
 const handler = async (m, { conn, text, command }) => {
