@@ -1,7 +1,4 @@
-// YouTube Play : mp3 & mp4
-// Free API : https://api.sylphy.xyz
-// YTDL : https://ytdl.sylphy.xyz
-```
+
 import { createCanvas, loadImage } from 'canvas';
 import { getAverageColor } from 'fast-average-color-node';
 
@@ -140,4 +137,3 @@ async function create(imageUrl, title, author, currentSec, totalSec) {
 
   return canvas.toBuffer('image/png')
 }
-```
