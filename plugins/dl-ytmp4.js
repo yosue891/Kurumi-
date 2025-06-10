@@ -17,7 +17,7 @@ let handler = async (m, { conn, text, args }) => {
     }
 
     try {
-        m.react('⏳')
+        m.react('🕒')
         const search = await yts(args[0])
         const video = search.videos[0]
         if (!video || !video.url) return conn.reply(m.chat, `No se encontró el video.`, m)
